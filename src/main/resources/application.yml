@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: rangero
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/rangero
+    username: ${db_username}
+    password: ${db_password}
+
+logging:
+  level:
+    root: info
+
+
+
+
+
+
+
