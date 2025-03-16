@@ -6,9 +6,14 @@ spring:
     url: jdbc:postgresql://localhost:5432/rangero
     username: ${db_username}
     password: ${db_password}
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+
 logging:
   level:
-    root: info
+    root: debug
 
 
 security:

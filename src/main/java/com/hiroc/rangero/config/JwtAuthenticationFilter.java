@@ -35,6 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         //Check security context
         //Just a defensive measure, the context should be null by right
+        log.debug("JWT AUTH FILTER - CALLED");
         if (SecurityContextHolder.getContext().getAuthentication()!=null){
             log.debug("JWT Skipped - Contexted filled");
             filterChain.doFilter(request,response);
@@ -43,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         //Extract header
         String authHeader = request.getHeader("Authorization");
         if (authHeader==null || !authHeader.startsWith("Bearer ") ){
-            log.debug("JWT Token not found ");
+            log.debug("JWT Token not found, SKIP` ");
             filterChain.doFilter(request,response);
             return;
         }
@@ -70,11 +71,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     userDetails.getAuthorities()
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            filterChain.doFilter(request,response);
         } else{
             //Expired token
             throw new RuntimeException("JWT Token has expired");
         }
+
+        filterChain.doFilter(request,response);
     }
 }
 

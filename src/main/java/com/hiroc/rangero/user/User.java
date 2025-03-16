@@ -1,10 +1,7 @@
 package com.hiroc.rangero.user;
 
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-
+@Table(name="_user")
 public class User implements UserDetails {
 
     //TODO define some basic properties
@@ -27,7 +24,7 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id; //ID
 
-    private String username; //unique
+    private String username; //no longer unique
     private String email; //uniqiue
     private String displayName; //can be what
     private String password;
