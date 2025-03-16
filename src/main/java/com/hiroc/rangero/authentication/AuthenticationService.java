@@ -1,6 +1,7 @@
 package com.hiroc.rangero.authentication;
 
 
+import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.user.User;
 import com.hiroc.rangero.user.UserRepository;
 import com.hiroc.rangero.utility.JwtService;
@@ -39,7 +40,7 @@ public class AuthenticationService {
         if (exists!=null){
             //TODO throw a proper error
             log.debug("Registration failed - user with email exists");
-            throw new RuntimeException("Email is already taken");
+            throw new BadRequestException("Email is already taken");
         }
 
         //Create user
@@ -63,9 +64,9 @@ public class AuthenticationService {
 
     public AuthenticationResponse login( LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail());
-        if (user==null){
+        if (user==null || !passwordEncoder.matches(request.getPassword(),user.getPassword())){
             log.info("LOGIN FAILED");
-            throw new BadCredentialsException("Invalid email or password");
+            throw new BadCredentialsException("Email or password is incorrect");
         }
         String token = jwtService.generateToken(user);
         return AuthenticationResponse.builder()
