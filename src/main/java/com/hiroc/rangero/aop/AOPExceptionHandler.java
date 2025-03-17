@@ -2,6 +2,7 @@ package com.hiroc.rangero.aop;
 
 
 import com.hiroc.rangero.exception.BadRequestException;
+import com.hiroc.rangero.exception.JWTExpiredException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,12 @@ public class AOPExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorDetails handleBadRequest(BadRequestException ex){
         return new ErrorDetails(ex.getMessage());
+    }
+
+    @ExceptionHandler(JWTExpiredException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorDetails handleJWTExpired(JWTExpiredException ex){
+        return new ErrorDetails(ex.getMessage(),"JWT_EXPIRED");
     }
 
     @ExceptionHandler(RuntimeException.class)

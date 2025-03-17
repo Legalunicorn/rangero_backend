@@ -1,5 +1,6 @@
 package com.hiroc.rangero.config;
 
+import com.hiroc.rangero.exception.JWTExpiredException;
 import com.hiroc.rangero.utility.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -57,6 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception e){
             log.debug("JWT username extraction failed");
             //TODO test if this throws proper exception
+            throw new JWTExpiredException("JWT has expired");
         }
         //Check token validity
         if (!jwtService.isTokenExpired(token)){
