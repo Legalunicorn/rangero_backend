@@ -3,6 +3,7 @@ package com.hiroc.rangero.project;
 
 import com.hiroc.rangero.inviteRecord.InviteRecord;
 import com.hiroc.rangero.projectMember.ProjectMember;
+import com.hiroc.rangero.task.Task;
 import com.hiroc.rangero.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -32,11 +33,14 @@ public class Project {
     @NotNull
     private User creator;
 
-    @OneToMany(mappedBy = "project")
+    @OneToMany(mappedBy = "project",cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<ProjectMember> projectMembers;
 
     @OneToMany(mappedBy = "project")
     private Set<InviteRecord> projectInvites;
+
+    @OneToMany(mappedBy="project")
+    private Set<Task> tasks;
 
 
     @CreationTimestamp

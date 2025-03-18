@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface InviteRecordRepository extends JpaRepository<InviteRecord,Long> {
-    Optional<InviteRecord> findByUserAndProject(User user, Project project);
+    Optional<InviteRecord> findByInviteeAndProject(User user, Project project);
 }

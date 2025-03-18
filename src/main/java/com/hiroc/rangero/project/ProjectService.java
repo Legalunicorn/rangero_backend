@@ -23,9 +23,11 @@ public class ProjectService {
         return projectRepository.findById(projectId);
     }
 
+    //Controller handle DTOS now
     @Transactional
-    public ProjectDTO createProject(ProjectRequestDTO request, User creator){
+    public Project createProject(ProjectRequestDTO request, User creator){
         //Create the project with author
+        log.info("Creating project of name: {}",request.getName());
         Project newProject = Project.builder()
                 .creator(creator)
                 .name(request.getName())
@@ -33,6 +35,7 @@ public class ProjectService {
 
         projectRepository.save(newProject); //Generate ID
 
+        //Create a member -> should delegate to projectMemberSevice?..
         ProjectMember member = ProjectMember.builder()
                 .projectRole(ProjectRole.OWNER)
                 .project(newProject)
@@ -41,13 +44,9 @@ public class ProjectService {
 
 
         newProject.addProjectMember(member);
-        //THIS CALL IS NOT NEEDED
-        //@Transactional -> any changes automatically FLUSHED to the database at the end of the transaction
-        //projectRepository.save(newProject);
-
-        return ProjectDTO.builder()
-                .name(request.getName())
-                .build();
+//        projectRepository.save(newProject);
+        //@Transaction no need to save?
+        return newProject;
 
     }
 }

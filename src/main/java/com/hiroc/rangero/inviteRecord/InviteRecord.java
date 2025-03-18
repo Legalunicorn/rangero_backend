@@ -13,22 +13,21 @@ import lombok.*;
 @Getter
 @Setter
 public class InviteRecord {
-    @id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Enumerated(EnumType.STRING)
     private InviteStatus inviteStatus;
 
-    //map to a single group?
-
-    //many invites to one user
     @ManyToOne
     @JoinColumn(name = "invitee_id")
     private User invitee;
 
-    //one invite record -> belongs to one project
-    // one project -> has many associated invite records
+    @ManyToOne
+    @JoinColumn(name="invitor_id")
+    private User invitor;
+
     @ManyToOne
     @JoinColumn(name="project_id")
     private Project project;

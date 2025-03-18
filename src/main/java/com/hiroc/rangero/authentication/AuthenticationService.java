@@ -4,6 +4,7 @@ package com.hiroc.rangero.authentication;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.user.User;
 import com.hiroc.rangero.user.UserRepository;
+import com.hiroc.rangero.user.UserRole;
 import com.hiroc.rangero.utility.JwtService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -48,6 +49,7 @@ public class AuthenticationService {
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .role(UserRole.USER)
                 .build();
 
         userRepository.save(newUser);

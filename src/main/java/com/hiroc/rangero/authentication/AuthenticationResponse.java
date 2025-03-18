@@ -12,5 +12,5 @@ public class AuthenticationResponse {
     private String token; //jwt token
     private String email; //primary key
     private String username; //identifier
-    private String profilePictureURL; //TODO
+    private String profilePictureURL; //TODO when S3 Added
 }

@@ -25,4 +25,8 @@ public class ProjectMemberService {
     public Optional<ProjectMember> findByUserAndProject(User user, Project project){
         return projectMemberRepository.findByUserAndProject(user,project);
     }
+
+    public Optional<ProjectMember> findByUserEmailAndProjectId(String email, long projectId) {
+        return projectMemberRepository.findByUserEmailAndProjectId(email,projectId);
+    }
 }

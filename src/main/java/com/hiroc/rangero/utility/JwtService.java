@@ -11,14 +11,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 
-//Bean dependecies
+//Bean dependencies
 @Service
 @Slf4j
 public class JwtService {
@@ -30,20 +27,19 @@ public class JwtService {
     //################### EXTRACTION #############################################
 
     public Claims extractAllClaims(String token){
-        Claims claims = Jwts.parser()
+        return Jwts.parser()
                 .verifyWith(getSignInKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return claims;
     }
 
 
     public <T> T extractClaim(String token, Function<Claims,T> claimsResolver){
         // Function interface -> takes in "Claims", produce T
         // claimsResolver is a funct oin
-        return claimsResolver.apply(extractAllClaims(token));
-
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
     }
 
     public String extractUsername(String token){
@@ -60,11 +56,14 @@ public class JwtService {
     public String generateToken(
             Map<String,Object> extractClaims,
             UserDetails userDetails){
+        //Useless
+        extractClaims.put("jit", UUID.randomUUID().toString());
         String token = Jwts.builder()
                 .claims(extractClaims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis()+JWT_EXPIRATION))
+                .signWith(getSignInKey())
                 .compact();
         return token;
 
@@ -84,6 +83,8 @@ public class JwtService {
 //    }
 
     public boolean isTokenExpired(String token){
+        log.debug("Expiration of jwt: {}",extractExpiration(token));
+        log.debug("new Date: {}",new Date());
         return extractExpiration(token).before(new Date());
     }
 

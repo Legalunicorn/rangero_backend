@@ -3,6 +3,7 @@ package com.hiroc.rangero.user;
 
 import com.hiroc.rangero.inviteRecord.InviteRecord;
 import com.hiroc.rangero.projectMember.ProjectMember;
+import com.hiroc.rangero.task.Task;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,13 +33,20 @@ public class User implements UserDetails {
     private String email; //uniqiue
     private String displayName; //can be what
     private String password;
+
+    @Enumerated(EnumType.STRING)
     private UserRole role;
+
+    @OneToMany(mappedBy="assignee")
+    private Set<Task> tasks = new HashSet<>();
 
     @OneToMany(mappedBy = "user")
     private Set<ProjectMember>  projectMembers = new HashSet<>();
 
     @OneToMany(mappedBy="invitee")
     private Set<InviteRecord> projectInvites = new HashSet<>();
+
+    //TODO add helper method in task or in user for adding task and maintaining bidirectional relationship
 
 
     @Override
@@ -50,8 +58,6 @@ public class User implements UserDetails {
     public String getPassword(){
         return password;
     }
-
-
 
 
     @Override

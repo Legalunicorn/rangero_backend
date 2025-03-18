@@ -27,7 +27,7 @@ public class InviteRecordService {
     private final UserService userService;
     private final ProjectService projectService;
 
-    public InviteRecordDTO createInvite(String inviteeEmail, User invitor, long projectId){
+    public InviteRecord createInvite(String inviteeEmail, User invitor, long projectId){
 
         //0. check that both project and invitee Email exists
         User inviteeUser = userService.findByEmail(inviteeEmail);
@@ -50,38 +50,18 @@ public class InviteRecordService {
                 .inviteStatus(InviteStatus.PENDING)
                 .project(project)
                 .invitee(inviteeUser)
+                .invitor(invitor)
                 .build();
 
         inviteRecordRepository.save(newInvite);
 
-        return InviteRecordDTO.builder()
-                .inviteeEmail(inviteeEmail)
-                .invitorEmail(invitor.getEmail())
-                .projectId(projectId)
-                .build();
-
+        return newInvite;
 
     }
 
 
     @Transactional
     public void acceptInvite(User user, long inviteId) {
-//        //0. check that project exist
-//        Project project = projectService.findById(projectId)
-//                .orElseThrow(()-> new BadRequestException("Project does not exist"));
-//
-//        //1. check invite record exist, and is "pending"
-//        InviteRecord record = inviteRecordRepository.findByUserAndProject(user,project)
-//                .orElseThrow(()-> new BadRequestException("Invite request does not exist"));
-//
-//        if (record.getInviteStatus()!=InviteStatus.PENDING){
-//            throw new BadRequestException("Invite request has expired");
-//        }
-//
-//        //3. Check that the user is not already a member of the project
-//        Optional<ProjectMember> member = projectMemberService.findByUserAndProject(user,project);
-//        if (member.isPresent()) throw new BadRequestException("User is already a member of project "+projectId);
-
         InviteRecord record = inviteRecordRepository.findById(inviteId)
                 .orElseThrow(()-> new BadRequestException("Invite request does not exist"));
 

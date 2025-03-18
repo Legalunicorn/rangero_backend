@@ -13,6 +13,12 @@ public interface ProjectMemberRepository  extends JpaRepository<ProjectMember,Lo
 
     Optional<ProjectMember> findByUserAndProject(User user, Project project);
 
+    @Query("""
+            select pm from ProjectMember pm 
+            WHERE pm.user.email=:email AND pm.project.id=:projectId
+           """)
+    Optional<ProjectMember> findByUserEmailAndProjectId(@Param("email")String email,@Param("projectId") long projectId);
+
 //    @Query("""
 //            SELECT pm FROM ProjectMember pm
 //            WHERE pm.user.id=:userId AND pm.project.id=:projectId

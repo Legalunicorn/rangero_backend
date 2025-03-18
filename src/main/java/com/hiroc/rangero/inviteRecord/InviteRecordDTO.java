@@ -12,6 +12,5 @@ import org.assertj.core.api.recursive.assertion.RecursiveAssertionConfiguration;
 public class InviteRecordDTO {
     private String inviteeEmail;
     private Long projectId;
-    //TODO use USER instead of just their ID?
     private String invitorEmail;
 }
