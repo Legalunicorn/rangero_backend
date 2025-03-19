@@ -31,6 +31,7 @@ public class ProjectService {
         Project newProject = Project.builder()
                 .creator(creator)
                 .name(request.getName())
+                .strictMode(false)
                 .build();
 
         projectRepository.save(newProject); //Generate ID
@@ -47,6 +48,5 @@ public class ProjectService {
 //        projectRepository.save(newProject);
         //@Transaction no need to save?
         return newProject;
-
     }
 }

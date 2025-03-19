@@ -37,9 +37,9 @@ public class InviteRecordService {
                 .orElseThrow(()-> new BadRequestException("Project of ID does not exist"));
 
         //1. verify the invitor has authority
-        Optional<ProjectMember> invitorRecord = projectMemberService.findByUserAndProject(invitor,project);
-        if (invitorRecord.isEmpty()) throw new BadRequestException("Invitor is not a member");
-        if (invitorRecord.get().getProjectRole()==ProjectRole.MEMBER) throw new UnauthorisedException("Only Admins and Owners can invite members");
+        ProjectMember invitorRecord = projectMemberService.findByUserAndProject(invitor,project)
+                .orElseThrow(()-> new UnauthorisedException("Invitation failed. Invitor is not a member of the project"));
+        checkProjectPermissions(project,invitorRecord,ProjectRole.ADMIN);
 
         //2. check that invitee is not already a member
         Optional<ProjectMember> existingMember = projectMemberService.findByUserAndProject(inviteeUser,project);
@@ -88,6 +88,24 @@ public class InviteRecordService {
         projectMemberService.save(newMember);
         record.setInviteStatus(InviteStatus.ACCEPTED);
 
-
     }
+
+    private void checkProjectPermissions(Project project,ProjectMember projectMember,ProjectRole requiredRole){
+        if (project.isStrictMode()){
+            if (!projectMember.getProjectRole().hasPermission(requiredRole)) {
+                throw new UnauthorisedException("You do not have permission to perform this action");
+            }
+        }
+    }
+
+//    private void checkProjectPermissions(Project project, User user, ProjectRole requiredRole){
+//        if (project.isStrictMode()){
+//            //Get the role of the user in this project?
+//            ProjectMember projectMember = projectMemberService.findByUserAndProject(user,project)
+//                    .orElseThrow(()->new UnauthorisedException("user is not a member of the project."));
+//            if (!projectMember.getProjectRole().hasPermission(requiredRole)){
+//                throw new UnauthorisedException("You do not have permission to perform this action");
+//            }
+//        }
+//    }
 }

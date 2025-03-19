@@ -1,0 +1,6 @@
+usage of DTOS vs Entities
+
+-> Services are allowed to communicate with each other using Entites
+-> Services are to return DTO's and not entities to the controller
+-> If a function can be used by both service + controller, make a wrapper function for the one meant for services and convert the output to a DTO
+

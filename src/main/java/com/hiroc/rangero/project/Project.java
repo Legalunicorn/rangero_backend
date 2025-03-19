@@ -27,6 +27,7 @@ public class Project {
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
     private long id;
     private String name;
+    private boolean strictMode;
     //TODO map one project to many tasks
 
     @ManyToOne
