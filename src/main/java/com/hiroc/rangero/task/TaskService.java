@@ -16,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,9 +27,18 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserService userService;
     private final ProjectMemberService projectMemberService;
+
+    //Make sure project service does not call task service
     private final ProjectService projectService;
     private final TaskMapper taskMapper;
 
+    public Set<TaskDTO> findTaskByProjectId(User accessor, Long projectId){
+        ProjectMember member = projectMemberService.getProjectMember(accessor.getEmail(),projectId)
+                .orElseThrow(UnauthorisedException::new);
+
+         Set<Task> tasks = taskRepository.findTasksByProjectId(projectId);
+         return tasks.stream().map(taskMapper::toDto).collect(Collectors.toSet());
+    }
 
     @Transactional
     public TaskDTO patchTaskDetails(User user, Long taskId, TaskRequestDTO updatedDetails){
@@ -125,4 +137,6 @@ public class TaskService {
             throw new UnauthorisedException("You do not have permission to perform this action.");
         }
     }
+
+
 }

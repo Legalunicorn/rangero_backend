@@ -30,15 +30,18 @@ public class TaskController {
 
     @PatchMapping("/{taskId}/status")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public TaskDTO patchTaskStatus(@RequestParam Long taskId, @RequestBody TaskStatus newStatus){
+    public TaskDTO patchTaskStatus(@PathVariable Long taskId, @RequestBody TaskRequestDTO request ){
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (request.getStatus()==null){
+            throw new BadRequestException("Invalid updated status value");
+        }
         if (taskId==null || taskId<=0) throw new BadRequestException("Invalid taskId");
-        return taskService.patchTaskStatusDto(user,taskId,newStatus);
+        return taskService.patchTaskStatusDto(user,taskId,request.getStatus());
     }
 
     @PatchMapping("/{taskId}/details")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public TaskDTO patchTaskDetails(@RequestParam Long taskId, @Valid @RequestBody TaskRequestDTO request){
+    public TaskDTO patchTaskDetails(@PathVariable Long taskId, @Valid @RequestBody TaskRequestDTO request){
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (taskId==null || taskId<=0) throw new BadRequestException("Invalid taskId");
         return taskService.patchTaskDetails(user,taskId,request);
