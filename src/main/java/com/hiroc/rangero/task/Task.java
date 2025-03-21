@@ -5,8 +5,11 @@ import com.hiroc.rangero.project.Project;
 import com.hiroc.rangero.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Entity
@@ -37,6 +40,12 @@ public class Task {
     @ManyToOne
     @JoinColumn(name="project_id")
     private Project project;
+
+    @CreationTimestamp
+    private LocalDateTime createdOn;
+    @UpdateTimestamp
+    private LocalDateTime updatedOn;
+
 
 
 }

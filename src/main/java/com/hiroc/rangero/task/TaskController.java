@@ -1,6 +1,8 @@
 package com.hiroc.rangero.task;
 
 
+import com.hiroc.rangero.comment.CommentDTO;
+import com.hiroc.rangero.comment.CommentService;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.mapper.TaskMapper;
 import com.hiroc.rangero.user.User;
@@ -11,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Set;
+
 @RequestMapping("/api/tasks")
 @RestController
 @RequiredArgsConstructor
@@ -18,7 +22,28 @@ import org.springframework.web.bind.annotation.*;
 public class TaskController {
 
     private final TaskService taskService;
+    private final CommentService commentService;
     private final TaskMapper taskMapper;
+
+
+    @GetMapping("/{taskId}/comments")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public Set<CommentDTO> getTaskCommnets(@PathVariable long taskId){
+        if (taskId<=0){
+            throw new BadRequestException("Task Id must be positive");
+        }
+        User accessor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return commentService.getCommentsByTaskIdAuthorizedToDto(accessor,taskId);
+    }
+
+
+
+    @GetMapping("/{taskId}")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public TaskDTO getTask(@PathVariable long taskId){
+        User accessor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return taskService.getTaskByIdAuthorizedToDto(accessor,taskId);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

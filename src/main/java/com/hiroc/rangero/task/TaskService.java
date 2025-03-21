@@ -2,6 +2,7 @@ package com.hiroc.rangero.task;
 
 
 import com.hiroc.rangero.exception.BadRequestException;
+import com.hiroc.rangero.exception.TaskNotFoundException;
 import com.hiroc.rangero.exception.UnauthorisedException;
 import com.hiroc.rangero.mapper.TaskMapper;
 import com.hiroc.rangero.project.Project;
@@ -31,6 +32,24 @@ public class TaskService {
     //Make sure project service does not call task service
     private final ProjectService projectService;
     private final TaskMapper taskMapper;
+
+    public TaskDTO getTaskByIdAuthorizedToDto(User accessor, long taskId){
+        Task task = getTaskByIdAuthorized(accessor,taskId);
+        return taskMapper.toDto(task);
+    }
+
+    public Task getTaskByIdAuthorized(User accessor , long taskID){
+        //Security measure: only members can access the task
+        //Get the task
+        Task task = taskRepository.findById(taskID)
+                .orElseThrow(()->new TaskNotFoundException(taskID));
+        //Check that the user is a member of the project that the tasks belongs t o
+        ProjectMember member = projectMemberService.getProjectMember(accessor.getEmail(),task.getProject().getId())
+                .orElseThrow(UnauthorisedException::new);
+        //Return the task
+        return task;
+
+    }
 
     public Set<TaskDTO> findTaskByProjectId(User accessor, Long projectId){
         ProjectMember member = projectMemberService.getProjectMember(accessor.getEmail(),projectId)
