@@ -10,7 +10,7 @@ import lombok.Data;
 @AllArgsConstructor
 @Data
 public class CommentRequestDTO {
-    @NotNull
+//    @NotNull - cam be nullable if there is an attachment
     private String body;
     @Positive
     private long taskId;

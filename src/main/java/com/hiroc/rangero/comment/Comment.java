@@ -24,6 +24,9 @@ public class Comment {
     private String body;
 
     //Attachment
+    private String fileKey; //S3 Object key ("ie task/1/name.png")
+    private String fileName;
+    private Long fileSize; //size of file in bytes
 
     @ManyToOne
     @JoinColumn(name="task_id")
