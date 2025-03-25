@@ -1,6 +1,7 @@
 package com.hiroc.rangero.project;
 
 
+import com.hiroc.rangero.activityLog.ActivityLog;
 import com.hiroc.rangero.inviteRecord.InviteRecord;
 import com.hiroc.rangero.projectMember.ProjectMember;
 import com.hiroc.rangero.task.Task;
@@ -39,6 +40,9 @@ public class Project {
 
     @OneToMany(mappedBy = "project")
     private Set<InviteRecord> projectInvites;
+
+    @OneToMany(mappedBy = "project")
+    private Set<ActivityLog> projectActivities;
 
     @OneToMany(mappedBy="project")
     private Set<Task> tasks;

@@ -1,6 +1,7 @@
 package com.hiroc.rangero.user;
 
 
+import com.hiroc.rangero.activityLog.ActivityLog;
 import com.hiroc.rangero.inviteRecord.InviteRecord;
 import com.hiroc.rangero.projectMember.ProjectMember;
 import com.hiroc.rangero.task.Task;
@@ -45,6 +46,9 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy="invitee")
     private Set<InviteRecord> projectInvites = new HashSet<>();
+
+    @OneToMany(mappedBy="user")
+    private Set<ActivityLog> userActivities = new HashSet<>();
 
     //TODO add helper method in task or in user for adding task and maintaining bidirectional relationship
 

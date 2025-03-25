@@ -1,10 +1,12 @@
 package com.hiroc.rangero.task;
 
 
+import com.hiroc.rangero.activityLog.ActivityLog;
 import com.hiroc.rangero.project.Project;
 import com.hiroc.rangero.user.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -40,6 +42,11 @@ public class Task {
     @ManyToOne
     @JoinColumn(name="project_id")
     private Project project;
+
+    @OneToMany(mappedBy="task")
+    private Set<Comment> comments;
+    @OneToMany(mappedBy="task")
+    private Set<ActivityLog> taskActivities;
 
     @CreationTimestamp
     private LocalDateTime createdOn;

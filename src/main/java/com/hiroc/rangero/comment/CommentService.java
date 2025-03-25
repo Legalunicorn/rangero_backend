@@ -65,10 +65,10 @@ public class CommentService {
             String key = fileService.uploadFile(file,request.getTaskId());
             //Success ?!?1
             log.debug("file key: {}",key);
-            log.debug("file name: {}",file.getName());
+            log.debug("file name: {}",file.getOriginalFilename());
             log.debug("file size: {}",file.getSize());
             newComment.setFileKey(key);
-            newComment.setFileName(file.getName());
+            newComment.setFileName(file.getOriginalFilename());
             newComment.setFileSize(file.getSize());
         }
         commentRepository.save(newComment);
