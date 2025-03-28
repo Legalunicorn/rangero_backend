@@ -13,3 +13,10 @@ VALUES(1,1,1,'OWNER');
 
 INSERT INTO task(due_date,assignee_id,id,project_id,priority,status,title,created_on,updated_on)
 VALUES ('2025-03-18',1,1,1,'LOW','UNASSIGNED','new task-1','2025-03-20 15:27:27.920793','2025-03-20 15:27:27.920793');
+
+
+--Change the SEQUAL T
+ALTER SEQUENCE task_id_seq RESTART WITH 1000;
+ALTER SEQUENCE project_id_seq RESTART WITH 1000;
+ALTER SEQUENCE project_member_id_seq RESTART WITH 1000;
+ALTER SEQUENCE _user_id_seq RESTART WITH 1000;
