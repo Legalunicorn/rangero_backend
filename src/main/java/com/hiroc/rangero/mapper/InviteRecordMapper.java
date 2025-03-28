@@ -13,6 +13,7 @@ public interface InviteRecordMapper {
 
     @Mapping(target="inviteeEmail",source="invitee.email")
     @Mapping(target="invitorEmail",source="invitor.email")
+    @Mapping(target="projectId",source="project.id")
     InviteRecordDTO toDTO(InviteRecord entity);
 
 //    InviteRecord toEntity(InviteRecordDTO dto);

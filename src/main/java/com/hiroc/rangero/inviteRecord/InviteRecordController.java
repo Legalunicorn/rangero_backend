@@ -33,7 +33,7 @@ public class InviteRecordController {
     //user ID + project ID
     //The person accepting must =
     @PatchMapping("/{inviteId}/accept")
-    public void acceptInvite(@RequestParam long inviteId){
+    public void acceptInvite(@PathVariable long inviteId){
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         inviteRecordService.acceptInvite(user, inviteId);
     }

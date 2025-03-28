@@ -44,7 +44,7 @@ public class InviteRecordService {
 
         //0. check that both project and invitee Email exists
         User inviteeUser = userService.findByEmail(inviteeEmail);
-        if (inviteeEmail==null) throw new BadRequestException("Email of user not found");
+        if (inviteeUser==null) throw new BadRequestException("Email of user not found");
         //This is kind of redundant, because the client will only feed a projectId that WE sent them
         Project project = projectService.findById(projectId)
                 .orElseThrow(()-> new BadRequestException("Project of ID does not exist"));
