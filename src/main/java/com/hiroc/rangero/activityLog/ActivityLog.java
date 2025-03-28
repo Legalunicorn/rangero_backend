@@ -23,33 +23,37 @@ public class ActivityLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    //TODO update project entity + mapper
     //one project is to many action
     //one action is to one project
-    @ManyToOne(cascade = CascadeType.ALL)
+//    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "project_id")
     private Project project;
 
 
-    //TODO update task entity + mapper
     //one task is to many actions
     // one action for one task
-    @ManyToOne(cascade = CascadeType.ALL)
+//    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name ="task_id")
     private Task task;
 
-    //TODO update user entity + mappter
     //one user -< many actions
     // one action - one user (owner)
-    @ManyToOne(cascade = CascadeType.ALL)
+//    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name="user_id")
     private User user;
 
+    private String assignedEmail;
 
+    @Enumerated(EnumType.STRING)
     private Action action;
 
     //Nullable
+    @Enumerated(EnumType.STRING)
     private TaskStatus previousTaskStatus;
+    @Enumerated(EnumType.STRING)
     private TaskStatus currentTaskStatus;
 
     @CreationTimestamp

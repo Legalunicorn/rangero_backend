@@ -1,6 +1,10 @@
 package com.hiroc.rangero.task;
 
 
+import com.hiroc.rangero.activityLog.Action;
+import com.hiroc.rangero.activityLog.ActivityLogEvent;
+import com.hiroc.rangero.activityLog.ActivityLogRequest;
+import com.hiroc.rangero.activityLog.ActivityLogService;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.exception.TaskNotFoundException;
 import com.hiroc.rangero.exception.UnauthorisedException;
@@ -15,6 +19,7 @@ import com.hiroc.rangero.user.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -28,6 +33,9 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserService userService;
     private final ProjectMemberService projectMemberService;
+//    to use event publisher instead
+//    private final ActivityLogService activityLogService;
+    private final ApplicationEventPublisher eventPublisher;
 
     //Make sure project service does not call task service
     private final ProjectService projectService;
@@ -60,10 +68,10 @@ public class TaskService {
     }
 
     @Transactional
+    //TODO -> allow task dependencies modification?
     public TaskDTO patchTaskDetails(User user, Long taskId, TaskRequestDTO updatedDetails){
         //Similar to status but wider range of information can be changed is not just the status
-        //TODO - add this to the log table when this is done, perhaps using rabbitMQ , or @Async
-        //1 .verify tas kID
+        //1 .verify task ID
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(()-> new BadRequestException("Task with id " + taskId + " does not exist."));
         //2. check project member role
@@ -71,11 +79,19 @@ public class TaskService {
                 .orElseThrow(()->new UnauthorisedException("You do not have permission to do this action. "));
         //3. check strict mode: ADMIN
         checkProjectPermissions(task.getProject(),member,ProjectRole.ADMIN);
+
+        // Authorized to Proceed
         //4. edit task and save
-        if (updatedDetails.getTitle()!=null) task.setTitle(updatedDetails.getTitle());
-        if (updatedDetails.getStatus()!=null) task.setStatus(updatedDetails.getStatus());
+        if (updatedDetails.getTitle()!=null) {
+            task.setTitle(updatedDetails.getTitle());
+        }
+        if (updatedDetails.getStatus()!=null && task.getStatus()!=updatedDetails.getStatus()) {
+            createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_DETAILS);
+            task.setStatus(updatedDetails.getStatus());
+        }
         if (updatedDetails.getDueDate()!=null) task.setDueDate(updatedDetails.getDueDate());
         if (updatedDetails.getAssigneeEmail()!=null){
+            createActivityLog(task,user,task.getProject(),Action.ASSIGN_TASK);
             modifyTaskAssignee(updatedDetails.getAssigneeEmail(),task.getProject(),task);
         }
         if (updatedDetails.getPriority()!=null) task.setPriority(updatedDetails.getPriority());
@@ -98,6 +114,7 @@ public class TaskService {
         ProjectMember member = projectMemberService.findByUserAndProject(user,task.getProject())
                 .orElseThrow(()-> new UnauthorisedException("You do not have permission to do this action"));
         //3. modify the task and commit
+        createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_STATUS,task.getStatus(),newStatus);
         task.setStatus(newStatus);
         taskRepository.save(task);
         return task;
@@ -127,16 +144,55 @@ public class TaskService {
                 .build();
 
         //Check that the assignee, if not null ,is a valid person
-        //TODO - extract this logic
         if (request.getAssigneeEmail()!=null) {
             modifyTaskAssignee(request.getAssigneeEmail(),project,newTask);
         } else{
             log.info(">>> request has no assignee email");
         }
         taskRepository.save(newTask);
+
+        //TODO, should this be sync or async, can newTask be used or not
+        createActivityLog(newTask,user,project,Action.CREATE_TASK);
         log.debug("Task created");
         return newTask;
 
+    }
+
+    //TODO
+    @Transactional
+    public void setTaskDependencies(User user, Long projectId, Long taskId, Set<Long> taskDependencyIds){
+        // 0 - validate everything: User permission, all tasks existing
+        //Set the task depednes base on the set of tasks ids
+
+        //Run the cycle detection algorithm
+
+        //
+
+
+    }
+
+
+    // HELPER METHODS #################################################################
+
+
+    //No Task
+    //TODO remove after changing to activity log
+    private void createActivityLog(User user, Project project, Action action){
+        ActivityLogRequest request = ActivityLogRequest.builder()
+                .user(user).project(project).action(action).build();
+        eventPublisher.publishEvent(new ActivityLogEvent(this,request));
+    }
+
+    //No status change
+    private void createActivityLog(Task task, User user,Project project, Action action){
+        ActivityLogRequest request = ActivityLogRequest.builder()
+                .user(user).project(project).task(task).action(action).build();
+        eventPublisher.publishEvent(new ActivityLogEvent(this,request));
+    }
+    private void createActivityLog(Task task,User user, Project project, Action action,TaskStatus previousStatus, TaskStatus newStatus){
+        ActivityLogRequest request = ActivityLogRequest.builder()
+                .user(user).project(project).task(task).previousTaskStatus(previousStatus).currentTaskStatus(newStatus).build();
+        eventPublisher.publishEvent(new ActivityLogEvent(this,request));
     }
 
     private void modifyTaskAssignee(String newAssigneeEmail, Project project, Task task){
@@ -156,6 +212,7 @@ public class TaskService {
             throw new UnauthorisedException("You do not have permission to perform this action.");
         }
     }
+
 
 
 }

@@ -7,25 +7,27 @@ import com.hiroc.rangero.task.TaskService;
 import com.hiroc.rangero.task.TaskStatus;
 import com.hiroc.rangero.user.User;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Value;
+import lombok.*;
 
-@Value
+//@Value
 @Builder
+@Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class ActivityLogRequest {
+//    @NotNull - can be null for only task creation, validate inside task service
+    private Task task;
     @NotNull
-    Task task;
+    private Project project;
     @NotNull
-    Project project;
-    @NotNull
-    User user;
+    private User user;
 
     @NotNull
-    Action action;
+    private Action action;
 
-    TaskStatus previousTaskStatus;
-    TaskStatus currentTaskStatus;
+    private TaskStatus previousTaskStatus;
+    private TaskStatus currentTaskStatus;
+
+    private String assignedEmail;
 
 }

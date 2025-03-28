@@ -3,6 +3,7 @@ package com.hiroc.rangero.inviteRecord;
 
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.exception.UnauthorisedException;
+import com.hiroc.rangero.mapper.InviteRecordMapper;
 import com.hiroc.rangero.project.Project;
 import com.hiroc.rangero.project.ProjectService;
 import com.hiroc.rangero.projectMember.ProjectMember;
@@ -16,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,16 @@ public class InviteRecordService {
     private final ProjectMemberService projectMemberService;
     private final UserService userService;
     private final ProjectService projectService;
+    private final InviteRecordMapper inviteRecordMapper;
+
+
+    public Set<InviteRecordDTO> getAllInvites(User accessor, String email){
+        if (!accessor.getEmail().equals(email)) throw new UnauthorisedException();
+        Set<InviteRecord> invites = inviteRecordRepository.findUserInvites(email);
+        return invites.stream().map(inviteRecordMapper::toDTO).collect(Collectors.toSet());
+    }
+
+
 
     public InviteRecord createInvite(String inviteeEmail, User invitor, long projectId){
 
@@ -70,7 +83,7 @@ public class InviteRecordService {
         }
 
         if (record.getInviteStatus()!=InviteStatus.PENDING){
-            throw new BadRequestException("Invite requet has expired or is not pending.");
+            throw new BadRequestException("Invite request has expired or is not pending.");
         }
 
         Project project = record.getProject();
@@ -98,14 +111,4 @@ public class InviteRecordService {
         }
     }
 
-//    private void checkProjectPermissions(Project project, User user, ProjectRole requiredRole){
-//        if (project.isStrictMode()){
-//            //Get the role of the user in this project?
-//            ProjectMember projectMember = projectMemberService.findByUserAndProject(user,project)
-//                    .orElseThrow(()->new UnauthorisedException("user is not a member of the project."));
-//            if (!projectMember.getProjectRole().hasPermission(requiredRole)){
-//                throw new UnauthorisedException("You do not have permission to perform this action");
-//            }
-//        }
-//    }
 }

@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -18,6 +20,7 @@ import java.util.Optional;
 public class ProjectMemberService {
 
     private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectMemberMapper projectMemberMapper;
 
 
     //Seperate this endpoint from leave group or not?
@@ -33,7 +36,6 @@ public class ProjectMemberService {
             if (authorizingMember.getProjectRole()==ProjectRole.OWNER){
                 throw new BadRequestException("Please transfer ownership before leaving, or delete the project ");
             } else{
-                //TODO - remove the user
                 projectMemberRepository.delete(affectedMember);
             }
         }
@@ -44,7 +46,6 @@ public class ProjectMemberService {
         //ADMIN can only remove members, not self remove
         if (authorizingMember.getProjectRole()==ProjectRole.ADMIN){
             if (affectedMember.getProjectRole()==ProjectRole.MEMBER){
-                //TODO - delete the affected member from the group
                 projectMemberRepository.delete(affectedMember);
             } else{
                 throw new UnauthorisedException();
@@ -53,7 +54,6 @@ public class ProjectMemberService {
 
         //OWNERS , and not self remove
         if (authorizingMember.getProjectRole()==ProjectRole.OWNER){
-            //TODO - perform the remove
             projectMemberRepository.delete(affectedMember);
         }
 //        return affectedMember;
@@ -74,6 +74,14 @@ public class ProjectMemberService {
 
     public Optional<ProjectMember> getProjectMember(String user_email,Long projectId){
         return projectMemberRepository.findByUserEmailAndProjectId(user_email,projectId);
+    }
+
+    public Set<ProjectMemberDTO> getAllProjectMember(User accessor, Long projectId){
+        ProjectMember member = getProjectMember(accessor.getEmail(),projectId)
+                .orElseThrow(UnauthorisedException::new);
+
+        Set<ProjectMember> allMembers =  projectMemberRepository.findAllProjectMembers(projectId);
+        return allMembers.stream().map(projectMemberMapper::toDTO).collect(Collectors.toSet());
     }
 
     @Transactional

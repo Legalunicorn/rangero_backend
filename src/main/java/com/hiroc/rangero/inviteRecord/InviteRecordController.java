@@ -19,6 +19,8 @@ public class InviteRecordController {
     private final InviteRecordService inviteRecordService;
     private final InviteRecordMapper inviteRecordMapper;
 
+
+
     //User email + project ID
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
