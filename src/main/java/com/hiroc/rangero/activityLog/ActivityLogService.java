@@ -59,11 +59,8 @@ public class ActivityLogService {
         ProjectMember member = projectMemberService.findByUserEmailAndProjectId(accessor.getEmail(),projectId)
                 .orElseThrow(UnauthorisedException::new);
 
-
         Set<ActivityLog> logs = activityLogRepository.findByProjectId(projectId);
-        Set<ActivityLogDTO> logsDTO =  logs.stream().map(activityLogMapper::toDTO).collect(Collectors.toSet());
-//        log.debug("size of logs dto {}",logsDTO.size());
-        return logsDTO;
+        return logs.stream().map(activityLogMapper::toDTO).collect(Collectors.toSet());
 
     }
 

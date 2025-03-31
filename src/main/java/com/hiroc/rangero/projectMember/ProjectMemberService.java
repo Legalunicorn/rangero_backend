@@ -23,7 +23,6 @@ public class ProjectMemberService {
     private final ProjectMemberMapper projectMemberMapper;
 
 
-    //Seperate this endpoint from leave group or not?
     @Transactional
     public void removeMember(User authorizingUser,Long projectId,Long userId){
         ProjectMember authorizingMember = projectMemberRepository.findByUserEmailAndProjectId(authorizingUser.getEmail(),projectId)
@@ -56,25 +55,34 @@ public class ProjectMemberService {
         if (authorizingMember.getProjectRole()==ProjectRole.OWNER){
             projectMemberRepository.delete(affectedMember);
         }
-//        return affectedMember;
     }
+
+
 
     @Transactional
     public ProjectMember save(ProjectMember projectMember){
         return projectMemberRepository.save(projectMember);
     }
 
+
+
     public Optional<ProjectMember> findByUserAndProject(User user, Project project){
         return projectMemberRepository.findByUserAndProject(user,project);
     }
+
+
 
     public Optional<ProjectMember> findByUserEmailAndProjectId(String email, long projectId) {
         return projectMemberRepository.findByUserEmailAndProjectId(email,projectId);
     }
 
+
+
     public Optional<ProjectMember> getProjectMember(String user_email,Long projectId){
         return projectMemberRepository.findByUserEmailAndProjectId(user_email,projectId);
     }
+
+
 
     public Set<ProjectMemberDTO> getAllProjectMember(User accessor, Long projectId){
         ProjectMember member = getProjectMember(accessor.getEmail(),projectId)
@@ -83,6 +91,8 @@ public class ProjectMemberService {
         Set<ProjectMember> allMembers =  projectMemberRepository.findAllProjectMembers(projectId);
         return allMembers.stream().map(projectMemberMapper::toDTO).collect(Collectors.toSet());
     }
+
+
 
     @Transactional
     public void patchProjectMemberRole(User authorizingUser, Long projectId, Long userId, ProjectRole newRole) {

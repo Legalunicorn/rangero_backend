@@ -33,8 +33,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserService userService;
     private final ProjectMemberService projectMemberService;
-//    to use event publisher instead
-//    private final ActivityLogService activityLogService;
     private final ApplicationEventPublisher eventPublisher;
 
     //Make sure project service does not call task service
@@ -77,6 +75,7 @@ public class TaskService {
         //2. check project member role
         ProjectMember member = projectMemberService.findByUserAndProject(user,task.getProject())
                 .orElseThrow(()->new UnauthorisedException("You do not have permission to do this action. "));
+
         //3. check strict mode: ADMIN
         checkProjectPermissions(task.getProject(),member,ProjectRole.ADMIN);
 
@@ -168,7 +167,6 @@ public class TaskService {
 
         //
 
-
     }
 
 
@@ -195,6 +193,7 @@ public class TaskService {
         eventPublisher.publishEvent(new ActivityLogEvent(this,request));
     }
 
+    //TODO -- did not check authorization
     private void modifyTaskAssignee(String newAssigneeEmail, Project project, Task task){
         User newAssignee = userService.findByEmail(newAssigneeEmail);
         if (newAssignee==null) throw new BadRequestException(">>> User with email "+newAssigneeEmail+" does not exist");
@@ -207,7 +206,7 @@ public class TaskService {
 
     //TODO - resolve: both project and project member must be fetched every time
     //consider creating this as a bean for flexibility or just manually checking on a case to case basis
-    private void  checkProjectPermissions(Project project, ProjectMember projectMember, ProjectRole requiredRole){
+    public void  checkProjectPermissions(Project project, ProjectMember projectMember, ProjectRole requiredRole){
         if (project.isStrictMode() && !projectMember.getProjectRole().hasPermission(requiredRole)){
             throw new UnauthorisedException("You do not have permission to perform this action.");
         }
