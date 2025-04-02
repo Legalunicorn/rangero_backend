@@ -3,6 +3,7 @@ package com.hiroc.rangero.task;
 
 import com.hiroc.rangero.activityLog.ActivityLog;
 import com.hiroc.rangero.comment.Comment;
+import com.hiroc.rangero.notification.Notification;
 import com.hiroc.rangero.project.Project;
 import com.hiroc.rangero.user.User;
 import jakarta.persistence.*;
@@ -49,6 +50,10 @@ public class Task {
 
     @OneToMany(mappedBy="task")
     private Set<ActivityLog> taskActivities;
+
+    //TODO consider deleting this if it has no value
+    @OneToMany(mappedBy="task")
+    private Set<Notification> notifications;
 
     @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinTable(

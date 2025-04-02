@@ -3,6 +3,7 @@ package com.hiroc.rangero.user;
 
 import com.hiroc.rangero.activityLog.ActivityLog;
 import com.hiroc.rangero.inviteRecord.InviteRecord;
+import com.hiroc.rangero.notification.Notification;
 import com.hiroc.rangero.projectMember.ProjectMember;
 import com.hiroc.rangero.task.Task;
 import jakarta.persistence.*;
@@ -50,7 +51,13 @@ public class User implements UserDetails {
     @OneToMany(mappedBy="user")
     private Set<ActivityLog> userActivities = new HashSet<>();
 
+    @OneToMany(mappedBy="sender")
+    private Set<Notification> sentNotifications = new HashSet<>();
+    @OneToMany(mappedBy="receiver")
+    private Set<Notification> receivedNotifications = new HashSet<>();
+
     //TODO add helper method in task or in user for adding task and maintaining bidirectional relationship
+
 
 
     @Override

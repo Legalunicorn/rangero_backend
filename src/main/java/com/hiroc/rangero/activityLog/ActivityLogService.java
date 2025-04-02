@@ -69,6 +69,7 @@ public class ActivityLogService {
     @TransactionalEventListener //BY default the phase is : AFTER_COMMIT
     @Async
     public void createLogAsync(ActivityLogEvent event){
+        //TODO check if the sender and reciever event gets mapped
         ActivityLogRequest request = event.getActivity();
         ActivityLog activityLog = activityLogMapper.requestToEntity(request);
         if (request.getPreviousTaskStatus()==null) activityLog.setCurrentTaskStatus(null);
