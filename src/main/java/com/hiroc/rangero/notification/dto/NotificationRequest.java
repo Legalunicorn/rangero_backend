@@ -1,36 +1,45 @@
-package com.hiroc.rangero.notification;
+package com.hiroc.rangero.notification.dto;
 
 
+import com.hiroc.rangero.notification.NotificationType;
 import com.hiroc.rangero.task.Task;
 import com.hiroc.rangero.user.User;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 @Builder
 @AllArgsConstructor
 public class NotificationRequest {
-    //use user_id to create notification ? or use email/
-    //the frontend will not have exposure to the other user id will they
-//    @Email
-//    private String senderEmail;
-//    @Email
-//    private String receiverEmail;
-//    @NotNull
-//    private Long taskId;
 
     //NotificationRequest contains the entity already?
+    // we need to mofigy the notification event
     @NotNull
     private User sender;
+
     @NotNull
-    private User receiver;
+    private Set<User> validUsers;
+
     @NotNull
     private Task task;
-    @NotNull
+
     private NotificationType notificationType;
-    //open default to false?
+
+
+
+
+//    @NotNull
+//    private User sender;
+//    @NotNull
+//    private User receiver;
+//    @NotNull
+//    private Task task;
+//    @NotNull
+//    private NotificationType notificationType;
+//    //open default to false?
 
 }

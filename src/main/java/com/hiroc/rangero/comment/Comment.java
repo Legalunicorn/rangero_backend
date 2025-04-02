@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 //Belongs to a comment exclusively
 @Entity
@@ -31,6 +32,14 @@ public class Comment {
     @ManyToOne
     @JoinColumn(name="task_id")
     private Task task;
+
+    @CollectionTable(
+            name = "comment_mentions",
+            joinColumns = @JoinColumn(name="comment_id")
+    )
+    //TODO consider using UserDTO as the element collection rather that just email?
+    private Set<String> validEmails;
+
 
     @CreationTimestamp
     private LocalDateTime createdOn;

@@ -32,7 +32,7 @@ public class User implements UserDetails {
     private long id; //ID
 
     private String username; //no longer unique
-    private String email; //uniqiue
+    private String email; //unique
     private String displayName; //can be what
     private String password;
 

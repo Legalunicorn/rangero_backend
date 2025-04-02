@@ -10,6 +10,8 @@ VALUES ('f','2025-03-20 15:27:27.920793',1,1,'2025-03-20 15:27:27.920793','first
 
 INSERT INTO project_member(id,project_id,user_id,project_role)
 VALUES(1,1,1,'OWNER');
+INSERT INTO project_member(id,project_id,user_id,project_role)
+VALUES(2,1,2,'ADMIN');
 
 INSERT INTO task(due_date,assignee_id,id,project_id,priority,status,title,created_on,updated_on)
 VALUES ('2025-03-18',1,1,1,'LOW','UNASSIGNED','new task-1','2025-03-20 15:27:27.920793','2025-03-20 15:27:27.920793');

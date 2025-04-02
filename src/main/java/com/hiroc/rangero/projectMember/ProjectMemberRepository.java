@@ -1,6 +1,7 @@
 package com.hiroc.rangero.projectMember;
 
 import com.hiroc.rangero.project.Project;
+import com.hiroc.rangero.task.Task;
 import com.hiroc.rangero.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -24,6 +25,13 @@ public interface ProjectMemberRepository  extends JpaRepository<ProjectMember,Lo
 
     @Query("select pm from ProjectMember pm where pm.user.id=:userId AND pm.project.id=:projectId")
     Optional<ProjectMember> findByUserIdAndProjectId(@Param("userId") Long userId, @Param("projectId") Long projectId);
+
+
+    @Query("""
+            select pm from ProjectMember pm
+            WHERE pm.user.email IN :email AND pm.project=:project
+            """)
+    Set<ProjectMember> findByUserEmailsAndProject(@Param("project") Project project, @Param("email") Set<String> emails);
 
 //    @Query("""
 //            SELECT pm FROM ProjectMember pm

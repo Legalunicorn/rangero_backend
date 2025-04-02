@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.Set;
+
 @Builder
 @AllArgsConstructor
 @Data
@@ -14,4 +16,7 @@ public class CommentRequestDTO {
     private String body;
     @Positive
     private long taskId;
+
+    //Comment can receive notiications
+    private Set<String> notifiedUserEmails;
 }

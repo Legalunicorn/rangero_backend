@@ -4,6 +4,7 @@ package com.hiroc.rangero.projectMember;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.exception.UnauthorisedException;
 import com.hiroc.rangero.project.Project;
+import com.hiroc.rangero.task.Task;
 import com.hiroc.rangero.user.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,10 @@ public class ProjectMemberService {
 
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMemberMapper projectMemberMapper;
+
+    public Set<ProjectMember> findByUserEmailsInAndProject(Project project, Set<String> emails) {
+        return projectMemberRepository.findByUserEmailsAndProject(project, emails);
+    }
 
 
     @Transactional
