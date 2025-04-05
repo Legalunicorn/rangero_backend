@@ -5,6 +5,8 @@ import com.hiroc.rangero.activityLog.ActivityLog;
 import com.hiroc.rangero.comment.Comment;
 import com.hiroc.rangero.notification.Notification;
 import com.hiroc.rangero.project.Project;
+import com.hiroc.rangero.task.enums.TaskPriority;
+import com.hiroc.rangero.task.enums.TaskStatus;
 import com.hiroc.rangero.user.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -55,19 +57,37 @@ public class Task {
     @OneToMany(mappedBy="task")
     private Set<Notification> notifications;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE},fetch = FetchType.LAZY)
     @JoinTable(
             name="task_dependencies",
             joinColumns = @JoinColumn(name="task_id"),
             inverseJoinColumns = @JoinColumn(name ="dependency_id")
     )
-    private Set<Task> dependencies = new HashSet<>();
+    private Set<Task> dependencies;
 
-    //Not necessary for now
-    //TODO initialize this whe needed
-    //@JsonIgnore
-    //@ManyToMany(mappedBy="dependencies")
-    //private Set<Task> dependents = new HashSet<>();
+    @ManyToMany(cascade ={CascadeType.PERSIST,CascadeType.MERGE},fetch = FetchType.LAZY)
+    @JoinTable(
+            name="task_dependents",
+            joinColumns = @JoinColumn(name="task_id"),
+            inverseJoinColumns = @JoinColumn(name ="dependent_id")
+    )
+    private Set<Task> dependents;
+
+
+    public void addDependency(Task dependency){
+        if (dependencies==null) this.dependencies = new HashSet<>();
+        dependencies.add(dependency);
+
+        if (dependency.dependents==null) dependency.dependents = new HashSet<>();
+        dependency.dependents.add(this);
+    }
+
+    //You just need to add the dependents
+    public void addDependent(Task dependent){
+        dependent.addDependent(this); //Just the inverse if needed
+    }
+
+
 
     @CreationTimestamp
     private LocalDateTime createdOn;

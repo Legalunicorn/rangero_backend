@@ -2,7 +2,7 @@ package unit.task;
 
 
 import com.hiroc.rangero.exception.UnauthorisedException;
-import com.hiroc.rangero.mapper.TaskMapper;
+import com.hiroc.rangero.task.helper.TaskMapper;
 import com.hiroc.rangero.project.Project;
 import com.hiroc.rangero.project.ProjectService;
 import com.hiroc.rangero.projectMember.ProjectMember;
@@ -10,7 +10,7 @@ import com.hiroc.rangero.projectMember.ProjectMemberService;
 import com.hiroc.rangero.projectMember.ProjectRole;
 import com.hiroc.rangero.task.Task;
 import com.hiroc.rangero.task.TaskRepository;
-import com.hiroc.rangero.task.TaskRequestDTO;
+import com.hiroc.rangero.task.dto.TaskRequestDTO;
 import com.hiroc.rangero.task.TaskService;
 import com.hiroc.rangero.user.User;
 import com.hiroc.rangero.user.UserService;
@@ -22,7 +22,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
-import java.util.Date;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

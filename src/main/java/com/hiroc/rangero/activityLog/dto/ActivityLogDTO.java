@@ -2,8 +2,7 @@ package com.hiroc.rangero.activityLog.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hiroc.rangero.activityLog.Action;
-import com.hiroc.rangero.task.TaskStatus;
-import com.hiroc.rangero.user.User;
+import com.hiroc.rangero.task.enums.TaskStatus;
 import com.hiroc.rangero.user.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

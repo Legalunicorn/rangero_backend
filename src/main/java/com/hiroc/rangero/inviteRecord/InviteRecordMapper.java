@@ -1,7 +1,5 @@
-package com.hiroc.rangero.mapper;
+package com.hiroc.rangero.inviteRecord;
 
-import com.hiroc.rangero.inviteRecord.InviteRecord;
-import com.hiroc.rangero.inviteRecord.InviteRecordDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

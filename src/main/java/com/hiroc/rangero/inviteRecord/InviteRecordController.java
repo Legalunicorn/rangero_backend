@@ -1,7 +1,6 @@
 package com.hiroc.rangero.inviteRecord;
 
 
-import com.hiroc.rangero.mapper.InviteRecordMapper;
 import com.hiroc.rangero.user.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

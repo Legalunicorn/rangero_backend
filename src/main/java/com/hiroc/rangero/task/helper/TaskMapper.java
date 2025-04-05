@@ -1,8 +1,8 @@
-package com.hiroc.rangero.mapper;
+package com.hiroc.rangero.task.helper;
 
 
 import com.hiroc.rangero.task.Task;
-import com.hiroc.rangero.task.TaskDTO;
+import com.hiroc.rangero.task.dto.TaskDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

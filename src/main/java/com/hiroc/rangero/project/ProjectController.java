@@ -3,10 +3,9 @@ package com.hiroc.rangero.project;
 
 import com.hiroc.rangero.activityLog.ActivityLogService;
 import com.hiroc.rangero.activityLog.dto.ActivityLogDTO;
-import com.hiroc.rangero.mapper.ProjectMapper;
 import com.hiroc.rangero.projectMember.ProjectMemberDTO;
 import com.hiroc.rangero.projectMember.ProjectMemberService;
-import com.hiroc.rangero.task.TaskDTO;
+import com.hiroc.rangero.task.dto.TaskDTO;
 import com.hiroc.rangero.task.TaskService;
 import com.hiroc.rangero.user.User;
 import jakarta.validation.Valid;

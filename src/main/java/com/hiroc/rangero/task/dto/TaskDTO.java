@@ -1,6 +1,8 @@
-package com.hiroc.rangero.task;
+package com.hiroc.rangero.task.dto;
 
 
+import com.hiroc.rangero.task.enums.TaskPriority;
+import com.hiroc.rangero.task.enums.TaskStatus;
 import lombok.Data;
 
 import java.time.LocalDate;

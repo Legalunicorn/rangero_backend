@@ -1,7 +1,5 @@
-package com.hiroc.rangero.mapper;
+package com.hiroc.rangero.project;
 
-import com.hiroc.rangero.project.Project;
-import com.hiroc.rangero.project.ProjectDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

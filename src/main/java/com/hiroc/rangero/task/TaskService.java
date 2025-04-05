@@ -4,16 +4,19 @@ package com.hiroc.rangero.task;
 import com.hiroc.rangero.activityLog.Action;
 import com.hiroc.rangero.activityLog.ActivityLogEvent;
 import com.hiroc.rangero.activityLog.ActivityLogRequest;
-import com.hiroc.rangero.activityLog.ActivityLogService;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.exception.TaskNotFoundException;
 import com.hiroc.rangero.exception.UnauthorisedException;
-import com.hiroc.rangero.mapper.TaskMapper;
 import com.hiroc.rangero.project.Project;
 import com.hiroc.rangero.project.ProjectService;
 import com.hiroc.rangero.projectMember.ProjectMember;
 import com.hiroc.rangero.projectMember.ProjectMemberService;
 import com.hiroc.rangero.projectMember.ProjectRole;
+import com.hiroc.rangero.task.dto.TaskDTO;
+import com.hiroc.rangero.task.dto.TaskRequestDTO;
+import com.hiroc.rangero.task.enums.TaskStatus;
+import com.hiroc.rangero.task.helper.CycleDetection;
+import com.hiroc.rangero.task.helper.TaskMapper;
 import com.hiroc.rangero.user.User;
 import com.hiroc.rangero.user.UserService;
 import jakarta.transaction.Transactional;
@@ -22,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -66,60 +71,6 @@ public class TaskService {
     }
 
     @Transactional
-    //TODO -> allow task dependencies modification?
-    public TaskDTO patchTaskDetails(User user, Long taskId, TaskRequestDTO updatedDetails){
-        //Similar to status but wider range of information can be changed is not just the status
-        //1 .verify task ID
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(()-> new BadRequestException("Task with id " + taskId + " does not exist."));
-        //2. check project member role
-        ProjectMember member = projectMemberService.findByUserAndProject(user,task.getProject())
-                .orElseThrow(()->new UnauthorisedException("You do not have permission to do this action. "));
-
-        //3. check strict mode: ADMIN
-        checkProjectPermissions(task.getProject(),member,ProjectRole.ADMIN);
-
-        // Authorized to Proceed
-        //4. edit task and save
-        if (updatedDetails.getTitle()!=null) {
-            task.setTitle(updatedDetails.getTitle());
-        }
-        if (updatedDetails.getStatus()!=null && task.getStatus()!=updatedDetails.getStatus()) {
-            createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_DETAILS);
-            task.setStatus(updatedDetails.getStatus());
-        }
-        if (updatedDetails.getDueDate()!=null) task.setDueDate(updatedDetails.getDueDate());
-        if (updatedDetails.getAssigneeEmail()!=null){
-            createActivityLog(task,user,task.getProject(),Action.ASSIGN_TASK);
-            modifyTaskAssignee(updatedDetails.getAssigneeEmail(),task.getProject(),task);
-        }
-        if (updatedDetails.getPriority()!=null) task.setPriority(updatedDetails.getPriority());
-        log.info("Task with ID {} updated by user {}", taskId, user.getUsername());
-        return taskMapper.toDto(task);
-
-    }
-
-    public TaskDTO patchTaskStatusDto(User user, Long taskId, TaskStatus newStatus){
-        Task updatedTask = patchTaskStatus(user,taskId,newStatus);
-        return taskMapper.toDto(updatedTask);
-    }
-    @Transactional
-    public Task patchTaskStatus(User user, Long taskId, TaskStatus newStatus){
-        //0. User has been authenticated by JWT + status required no permissions
-        //1. verify the taskID exists to retrieve task entity
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(()->new BadRequestException("Task with id "+taskId+" does not exist"));
-        //2. use task entity to get the project, and then fetch the projectMember
-        ProjectMember member = projectMemberService.findByUserAndProject(user,task.getProject())
-                .orElseThrow(()-> new UnauthorisedException("You do not have permission to do this action"));
-        //3. modify the task and commit
-        createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_STATUS,task.getStatus(),newStatus);
-        task.setStatus(newStatus);
-        taskRepository.save(task);
-        return task;
-    }
-
-    @Transactional
     public Task createTask(User user, TaskRequestDTO request){
 
         log.info(">>> Creating tasks for project with ID: {}",request.getProjectId());
@@ -157,20 +108,147 @@ public class TaskService {
 
     }
 
-    //TODO
     @Transactional
-    public void setTaskDependencies(User user, Long projectId, Long taskId, Set<Long> taskDependencyIds){
-        // 0 - validate everything: User permission, all tasks existing
-        //Set the task depednes base on the set of tasks ids
+    //Normal  fields : Title, Due Date, Priority
+    //Tricky fields : Status, Assignee, Dependencies
+    public TaskDTO patchTaskDetails(User user, Long taskId, TaskRequestDTO updatedDetails){
 
-        //Run the cycle detection algorithm
+        //############## VALIDATION ######################
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(()-> new BadRequestException("Task with id " + taskId + " does not exist."));
+        ProjectMember member = projectMemberService.findByUserAndProject(user,task.getProject())
+                .orElseThrow(UnauthorisedException::new);
+        //If strict mode enabled, only ADMINS, OWNERS can update tasks
+        checkProjectPermissions(task.getProject(),member,ProjectRole.ADMIN);
 
-        //
+        // ############### UPDATING LOGIC #################
+        //trivial: title, priority, due_date
+        //No need action pa
+        if (updatedDetails.getTitle()!=null) task.setTitle(updatedDetails.getTitle());
+        if (updatedDetails.getDueDate()!=null) task.setDueDate(updatedDetails.getDueDate());
+        if (updatedDetails.getPriority()!=null) task.setPriority(updatedDetails.getPriority());
+
+        //Harder: status, assignee, dependencies adding
+        if (updatedDetails.getStatus()!=null && task.getStatus()!=updatedDetails.getStatus()) {
+            if (updatedDetails.getStatus()==TaskStatus.COMPLETED){
+                //Check that dependencies are completed first
+                Set<Task> dependencies = task.getDependencies();
+                for (Task dependency : dependencies){
+                    if (dependency.getStatus()!=TaskStatus.COMPLETED){
+                        throw new BadRequestException("Task: "+dependency.getTitle()+" is a dependency and must be completed before this task is completed");
+                    }
+                }
+            }
+            createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_DETAILS);
+            task.setStatus(updatedDetails.getStatus());
+        }
+        if (updatedDetails.getAssigneeEmail()!=null){
+            createActivityLog(task,user,task.getProject(),Action.ASSIGN_TASK);
+            modifyTaskAssignee(updatedDetails.getAssigneeEmail(),task.getProject(),task);
+        }
+        //task dependencies should by default be empty in the request
+        if (updatedDetails.getTaskDependencies()!=null && !updatedDetails.getTaskDependencies().isEmpty()){
+            addTaskDependencies(user,task,updatedDetails.getTaskDependencies());
+            //TODO don't trigger this accidentally though
+            createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_DEPENDENCIES);
+        }
+
+        log.info("Task with ID {} updated by user {}", taskId, user.getUsername());
+        return taskMapper.toDto(task);
 
     }
 
+    //TODO => verify that this should have its own dedicated endpoint
+    public TaskDTO patchTaskStatusDto(User user, Long taskId, TaskStatus newStatus){
+        Task updatedTask = patchTaskStatus(user,taskId,newStatus);
+        return taskMapper.toDto(updatedTask);
+    }
+    @Transactional
+    public Task patchTaskStatus(User user, Long taskId, TaskStatus newStatus){
+        //0. User has been authenticated by JWT + status required no permissions
+        //1. verify the taskID exists to retrieve task entity
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(()->new BadRequestException("Task with id "+taskId+" does not exist"));
+        //2. use task entity to get the project, and then fetch the projectMember
+        ProjectMember member = projectMemberService.findByUserAndProject(user,task.getProject())
+                .orElseThrow(()-> new UnauthorisedException("You do not have permission to do this action"));
+        //3. modify the task and commit
+        createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_STATUS,task.getStatus(),newStatus);
+        task.setStatus(newStatus);
+        taskRepository.save(task);
+        return task;
+    }
+
+
+    @Transactional
+    public void addTaskDependencies(User user, Task task, Set<Long> taskDependencyIds){
+        // We extract those that can be found. If not found => No error thrown + nothing changes
+        Project project = task.getProject();
+        Set<Task> taskDependencies = taskRepository.findAllWithIdsIn(taskDependencyIds); //we add these task one by one
+        //
+        //Make sure these tasks belong to the project
+        for (Task t: taskDependencies) {
+            if (t.getProject().getId()!=project.getId()){
+                throw new UnauthorisedException("Unable to modify task from another project. Task ID:"+t.getId());
+            }
+        }
+
+        //1 - Cycle detection itself once data is validated
+        Set<Task> allProjectTask = taskRepository.findTaskByProjectIdWithDependencies(project.getId());
+        Map<Long,Set<Long>> adjacencyList = new HashMap<>(); //TaskID -> to its dependencies
+        for(Task t: allProjectTask){
+            Set<Long> dependencyIds = t.getDependencies().stream().map(Task::getId).collect(Collectors.toSet());
+            adjacencyList.put(t.getId(),dependencyIds);
+        }
+
+        for (Task newDependency: taskDependencies){
+            if (adjacencyList.get(task.getId()).contains(newDependency.getId())){
+                //Relationship is already established
+                continue;
+            }
+            adjacencyList.get(task.getId()).add(newDependency.getId());
+            CycleDetection.detectCycle(adjacencyList,task.getId());
+            task.addDependency(newDependency);
+        }
+    }
+
+//
+//    @Transactional
+//    public void setTaskDependencies(User user, Long projectId, Long taskId, Set<Long> taskDependencyIds){
+//        // 0 - validate everything: User permission, all tasks existingProject project = projectService.findById(projectId).orElseThrow(()->new BadRequestException("Project not found"));
+//        Task task = taskRepository.findById(taskId)
+//                .orElseThrow(()-> new TaskNotFoundException(taskId));
+//        ProjectMember member = projectMemberService.findByUserEmailAndProjectId(user.getEmail(),projectId)
+//                .orElseThrow(()->new BadRequestException("Project member not found"));
+//        checkProjectPermissions(task.getProject(),member,ProjectRole.ADMIN);
+//
+//        // We extract those that can be found. If not found ? No error thrown + nothing changes. Nothing will break
+//        Set<Task> taskDependencies = taskRepository.findAllWithIdsIn(taskDependencyIds); //we add these task one by one
+//        //Make sure these tasks belong to the project
+//        for (Task t: taskDependencies) if (t.getProject().getId()!=task.getProject().getId()){
+//            throw new UnauthorisedException("Unable to modify task from another project. Task ID:"+t.getId());
+//        }
+//
+//
+//        //1 - Cycle detection itself once data is validated
+//        Set<Task> allProjectTask = taskRepository.findTaskByProjectIdWithDependencies(projectId);
+//        Map<Long,Set<Task>> adjacencyList = new HashMap<>(); //TaskID -> to its dependencies
+//        for(Task t: allProjectTask){
+//            adjacencyList.put(t.getId(),t.getDependencies());
+//        }
+//
+//        for (Task newDependency: taskDependencies){
+//            adjacencyList.get(taskId).add(newDependency);
+//            CycleDetection.detectCycle(adjacencyList,taskId);
+//            task.addDependency(newDependency);
+//        }
+//        //@Transactional -> should save the new changes
+//    }
+
 
     // HELPER METHODS #################################################################
+
+
 
 
     //No Task
@@ -189,7 +267,7 @@ public class TaskService {
     }
     private void createActivityLog(Task task,User user, Project project, Action action,TaskStatus previousStatus, TaskStatus newStatus){
         ActivityLogRequest request = ActivityLogRequest.builder()
-                .user(user).project(project).task(task).previousTaskStatus(previousStatus).currentTaskStatus(newStatus).build();
+                .user(user).project(project).task(task).previousTaskStatus(previousStatus).currentTaskStatus(newStatus).action(action).build();
         eventPublisher.publishEvent(new ActivityLogEvent(this,request));
     }
 
@@ -197,7 +275,7 @@ public class TaskService {
     private void modifyTaskAssignee(String newAssigneeEmail, Project project, Task task){
         User newAssignee = userService.findByEmail(newAssigneeEmail);
         if (newAssignee==null) throw new BadRequestException(">>> User with email "+newAssigneeEmail+" does not exist");
-        ProjectMember newAssigneeRole = projectMemberService.findByUserAndProject(newAssignee,project)
+        projectMemberService.findByUserAndProject(newAssignee,project)
                 .orElseThrow(()->new BadRequestException(">>> User with email "+newAssigneeEmail+" is not a member of this project"));
         log.info(">>> assigning task to: {}", newAssigneeEmail);
         task.setAssignee(newAssignee);
