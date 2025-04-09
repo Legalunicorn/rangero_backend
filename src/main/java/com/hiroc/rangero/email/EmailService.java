@@ -1,9 +1,13 @@
 package com.hiroc.rangero.email;
 
+import com.hiroc.rangero.email.dto.EmailRequest;
+import com.hiroc.rangero.email.enums.EmailType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.event.EventListener;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -15,19 +19,26 @@ public class EmailService {
     @Value("$spring.mail.username")
     private String applicationEmail;
 
-    public void sendEmail(String recipient,String subject, String body){
+
+    @EventListener
+    @Async
+    public void sendEmail(EmailEvent event){
+        EmailRequest request = event.getRequest();
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(applicationEmail);
-        message.setTo(recipient);
-        message.setText(body);
-        message.setSubject(subject);
+        message.setTo(request.getRecipient());
+        message.setText(request.getBody());
+
+        if (request.getEmailType()== EmailType.NOTIFICATION){
+            message.setSubject("Notification");
+        } else if (request.getEmailType()== EmailType.REGISTRATION){
+            message.setSubject("OTP for Registration");
+        } else {
+            message.setSubject("Rangero");
+        }
 
         mailSender.send(message);
     }
 
-
-    public void sendRegistrationEmail(){
-
-    }
 
 }

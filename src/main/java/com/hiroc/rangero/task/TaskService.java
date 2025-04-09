@@ -4,7 +4,10 @@ package com.hiroc.rangero.task;
 import com.hiroc.rangero.activityLog.Action;
 import com.hiroc.rangero.activityLog.ActivityLogEvent;
 import com.hiroc.rangero.activityLog.ActivityLogRequest;
+import com.hiroc.rangero.email.EmailEvent;
 import com.hiroc.rangero.email.EmailService;
+import com.hiroc.rangero.email.dto.EmailRequest;
+import com.hiroc.rangero.email.enums.EmailType;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.exception.TaskNotFoundException;
 import com.hiroc.rangero.exception.UnauthorisedException;
@@ -111,7 +114,22 @@ public class TaskService {
 
 
         //Send a test email
-        emailService.sendEmail(user.getEmail(),"Test email",newTask.getTitle());
+        EmailRequest emailRequest = EmailRequest.builder()
+                .emailType(EmailType.NOTIFICATION)
+                .body("""
+                        Dear %s,
+                        There is a creation of a new task
+                        "%s"
+                        
+                        This email is auto-generated. Please do not reply 
+                        Thank you for your attention!
+                        Rangero Team
+                        
+                        """.formatted(user.getUsername(),newTask.getTitle()))
+                .recipient(user.getEmail())
+                .build();
+
+        eventPublisher.publishEvent(new EmailEvent(this, emailRequest));
         return newTask;
 
     }
