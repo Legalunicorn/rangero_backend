@@ -35,7 +35,7 @@ public class NotificationService {
 
     @TransactionalEventListener
     @Async
-    public void createMentionNotification(NotificationEvent event){
+    public void createNotification(NotificationEvent event){
         NotificationRequest request = event.getRequest();
         Set<Notification>  notifications = request.getValidUsers().stream().map(user -> {
             return Notification.builder()

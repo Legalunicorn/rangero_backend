@@ -64,6 +64,14 @@ public class User implements UserDetails {
     @OneToMany(mappedBy="receiver")
     private Set<Notification> receivedNotifications = new HashSet<>();
 
+    //TODO consider using embeddable for user settings
+    //TODO add user profile pictures
+
+    @Embedded
+    private UserSettings settings;
+
+
+
     //TODO - consider adding user.comments
 
     //TODO add helper method in task or in user for adding task and maintaining bidirectional relationship

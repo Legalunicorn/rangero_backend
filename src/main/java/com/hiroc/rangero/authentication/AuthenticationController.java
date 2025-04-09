@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @Slf4j
 public class AuthenticationController {
-    private final AuthenticationService authenticationService;
+     private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.ACCEPTED)

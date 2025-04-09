@@ -29,14 +29,15 @@ public class EmailService {
         message.setFrom(applicationEmail);
         message.setTo(request.getRecipient());
         message.setText(request.getBody());
+        message.setSubject(request.getSubject());
 
-        if (request.getEmailType()== EmailType.NOTIFICATION){
-            message.setSubject("Notification");
-        } else if (request.getEmailType()== EmailType.REGISTRATION){
-            message.setSubject("OTP for Registration");
-        } else {
-            message.setSubject("Rangero");
-        }
+//        if (request.getEmailType()== EmailType.NOTIFICATION){
+//            message.setSubject("Notification");
+//        } else if (request.getEmailType()== EmailType.REGISTRATION){
+//            message.setSubject("OTP for Registration");
+//        } else {
+//            message.setSubject("Rangero");
+//        }
 
         mailSender.send(message);
     }

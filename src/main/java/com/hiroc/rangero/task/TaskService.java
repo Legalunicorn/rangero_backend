@@ -11,6 +11,9 @@ import com.hiroc.rangero.email.enums.EmailType;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.exception.TaskNotFoundException;
 import com.hiroc.rangero.exception.UnauthorisedException;
+import com.hiroc.rangero.notification.NotificationEvent;
+import com.hiroc.rangero.notification.NotificationRepository;
+import com.hiroc.rangero.notification.dto.NotificationRequest;
 import com.hiroc.rangero.project.Project;
 import com.hiroc.rangero.project.ProjectService;
 import com.hiroc.rangero.projectMember.ProjectMember;
@@ -100,34 +103,16 @@ public class TaskService {
 
         //Check that the assignee, if not null ,is a valid person
         if (request.getAssigneeEmail()!=null) {
-            modifyTaskAssignee(request.getAssigneeEmail(),project,newTask);
+            modifyTaskAssigneeWithLoggingAndNotification(user,request.getAssigneeEmail(),project,newTask);
         } else{
             log.info(">>> request has no assignee email");
         }
         taskRepository.save(newTask);
 
         //TODO, should this be sync or async, can newTask be used or not
-        createActivityLog(newTask,user,project,Action.CREATE_TASK);
+        createActivityLog(newTask,user,Action.CREATE_TASK);
         log.debug("Task created");
 
-
-        //Send a test email
-        EmailRequest emailRequest = EmailRequest.builder()
-                .emailType(EmailType.NOTIFICATION)
-                .body("""
-                        Dear %s,
-                        There is a creation of a new task
-                        "%s"
-                        
-                        This email is auto-generated. Please do not reply 
-                        Thank you for your attention!
-                        Rangero Team
-                        
-                        """.formatted(user.getUsername(),newTask.getTitle()))
-                .recipient(user.getEmail())
-                .build();
-
-        eventPublisher.publishEvent(new EmailEvent(this, emailRequest));
         return newTask;
 
     }
@@ -163,18 +148,17 @@ public class TaskService {
                     }
                 }
             }
-            createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_DETAILS);
+            createActivityLog(task,user,Action.UPDATE_TASK_DETAILS);
             task.setStatus(updatedDetails.getStatus());
         }
         if (updatedDetails.getAssigneeEmail()!=null){
-            createActivityLog(task,user,task.getProject(),Action.ASSIGN_TASK);
-            modifyTaskAssignee(updatedDetails.getAssigneeEmail(),task.getProject(),task);
+            modifyTaskAssigneeWithLoggingAndNotification(user,updatedDetails.getAssigneeEmail(),task.getProject(),task);
         }
         //task dependencies should by default be empty in the request
         if (updatedDetails.getTaskDependencies()!=null && !updatedDetails.getTaskDependencies().isEmpty()){
             addTaskDependencies(user,task,updatedDetails.getTaskDependencies());
             //TODO don't trigger this accidentally though
-            createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_DEPENDENCIES);
+            createActivityLog(task,user,Action.UPDATE_TASK_DEPENDENCIES);
         }
 
         log.info("Task with ID {} updated by user {}", taskId, user.getUsername());
@@ -207,7 +191,7 @@ public class TaskService {
         }
 
         //3. modify the task and commit
-        createActivityLog(task,user,task.getProject(),task.getStatus(),newStatus);
+        createActivityLog(task,user,newStatus);
         task.setStatus(newStatus);
         taskRepository.save(task);
         return task;
@@ -245,35 +229,71 @@ public class TaskService {
         }
     }
     // HELPER METHODS #################################################################
-
-    //No Task
-    //TODO remove after changing to activity log
-    private void createActivityLog(User user, Project project, Action action){
-        ActivityLogRequest request = ActivityLogRequest.builder()
-                .user(user).project(project).action(action).build();
-        eventPublisher.publishEvent(new ActivityLogEvent(this,request));
-    }
+    //TODO consider refactor helper methods to their own class
 
     //No status change
-    private void createActivityLog(Task task, User user,Project project, Action action){
+    private void createActivityLog(Task task, User user, Action action){
         ActivityLogRequest request = ActivityLogRequest.builder()
-                .user(user).project(project).task(task).action(action).build();
+                .user(user).project(task.getProject()).task(task).action(action).build();
         eventPublisher.publishEvent(new ActivityLogEvent(this,request));
     }
-    private void createActivityLog(Task task,User user, Project project,TaskStatus previousStatus, TaskStatus newStatus){
+    private void createActivityLog(Task task,User user ,TaskStatus newStatus){
         ActivityLogRequest request = ActivityLogRequest.builder()
-                .user(user).project(project).task(task).previousTaskStatus(previousStatus).currentTaskStatus(newStatus).action(Action.UPDATE_TASK_STATUS).build();
+                .user(user).project(task.getProject()).task(task).previousTaskStatus(task.getStatus()).currentTaskStatus(newStatus).action(Action.UPDATE_TASK_STATUS).build();
         eventPublisher.publishEvent(new ActivityLogEvent(this,request));
     }
 
     //TODO -- did not check authorization
-    private void modifyTaskAssignee(String newAssigneeEmail, Project project, Task task){
+
+    private void modifyTaskAssigneeWithLoggingAndNotification(User admin,String newAssigneeEmail, Project project, Task task){
         User newAssignee = userService.findByEmail(newAssigneeEmail);
         if (newAssignee==null) throw new BadRequestException(">>> User with email "+newAssigneeEmail+" does not exist");
         projectMemberService.findByUserAndProject(newAssignee,project)
                 .orElseThrow(()->new BadRequestException(">>> User with email "+newAssigneeEmail+" is not a member of this project"));
         log.info(">>> assigning task to: {}", newAssigneeEmail);
         task.setAssignee(newAssignee);
+
+        //Notifications
+        // - In App notification
+        // - Project acitivty log
+        // - Email assigned user
+        notifyAssignee(admin,newAssignee,task);
+        createActivityLog(task,admin,Action.ASSIGN_TASK);
+        emailAssignee(admin,newAssignee,task,project.getName());
+
+
+
+    }
+
+    private void notifyAssignee(User admin, User assignee, Task task){
+        NotificationRequest request = NotificationRequest.builder()
+                .sender(admin)
+                .validUsers(Set.of(assignee))
+                .task(task)
+                .build();
+        eventPublisher.publishEvent(new NotificationEvent(this, request));
+    }
+
+
+    //Notify assignee by email
+    private void emailAssignee(User admin, User assignee, Task task,String projectName){
+        if (!assignee.getSettings().isAssignmentEmailEnabled()) return; //do not email user
+
+        EmailRequest request = EmailRequest.builder()
+                .body("""
+                        Dear %s,
+                        
+                        %s has assigned you to the task "%s".
+                        If you do not wish to receive such emails, please disable them in your account settings.
+                        
+                        Cheers,
+                        Rangero Team
+                        """.formatted(assignee.getEmail(),admin.getEmail(),task.getTitle()))
+                .subject("Task Assignment - "+projectName)
+                .recipient(assignee.getEmail())
+                .build();
+
+        eventPublisher.publishEvent(new EmailEvent(this,request));
 
     }
 

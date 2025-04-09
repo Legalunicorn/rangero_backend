@@ -20,10 +20,10 @@ public class EmailRequest {
     @NotNull
     private String body;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    private EmailType emailType;
-    //    private String subject;
+//    @NotNull
+//    @Enumerated(EnumType.STRING)
+//    private EmailType emailType;
+     private String subject;
 
 
 }
