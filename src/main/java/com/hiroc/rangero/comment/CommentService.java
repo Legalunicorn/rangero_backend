@@ -1,6 +1,8 @@
 package com.hiroc.rangero.comment;
 
 
+import com.hiroc.rangero.email.EmailEvent;
+import com.hiroc.rangero.email.dto.EmailRequest;
 import com.hiroc.rangero.notification.NotificationEvent;
 import com.hiroc.rangero.notification.dto.NotificationRequest;
 import com.hiroc.rangero.notification.NotificationType;
@@ -101,15 +103,39 @@ public class CommentService {
 
         //Publish event to create a notification
         if (!notifiedUsers.isEmpty()){
-            NotificationRequest notificationRequest = NotificationRequest.builder()
-                    .notificationType(NotificationType.MENTION)
-                    .sender(creator)
-                    .task(task)
-                    .validUsers(notifiedUsers)
-                    .build();
-            eventPublisher.publishEvent(new NotificationEvent(this,notificationRequest));
+            emailUsers(creator,notifiedUsers,task);
+            notifyUsersInApp(creator,notifiedUsers,task);
         }
 
         return commentMapper.toDTO(newComment);
+    }
+
+
+    private void emailUsers(User sender, Set<User> notifiedUsers, Task task){
+        for (User recipient: notifiedUsers){
+            EmailRequest emailRequest = EmailRequest.builder()
+                    .subject(sender.getEmail()+ "Mentioned You In A Comment")
+                    .recipient(recipient.getEmail())
+                    .body("""
+                            Dear %s,
+                            
+                            %s has mentioned you in a comment under the task: "%s"
+                            """.formatted(recipient.getUsername(),sender.getUsername(),task.getTitle()))
+                    .build();
+
+            eventPublisher.publishEvent(new EmailEvent(this, emailRequest));
+        }
+
+
+    }
+
+    private void notifyUsersInApp(User sender, Set<User> notifiedUsers, Task task){
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .notificationType(NotificationType.MENTION)
+                .sender(sender)
+                .task(task)
+                .validUsers(notifiedUsers)
+                .build();
+        eventPublisher.publishEvent(new NotificationEvent(this,notificationRequest));
     }
 }

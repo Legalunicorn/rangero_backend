@@ -288,7 +288,7 @@ public class TaskService {
                         
                         Cheers,
                         Rangero Team
-                        """.formatted(assignee.getEmail(),admin.getEmail(),task.getTitle()))
+                        """.formatted(assignee.getUsername(),admin.getUsername(),task.getTitle()))
                 .subject("Task Assignment - "+projectName)
                 .recipient(assignee.getEmail())
                 .build();
