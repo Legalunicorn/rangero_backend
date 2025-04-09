@@ -2,6 +2,7 @@ package com.hiroc.rangero.authentication;
 
 
 import com.hiroc.rangero.exception.BadRequestException;
+import com.hiroc.rangero.user.RegistrationOTP;
 import com.hiroc.rangero.user.User;
 import com.hiroc.rangero.user.UserRepository;
 import com.hiroc.rangero.user.UserRole;
@@ -14,6 +15,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +32,106 @@ public class AuthenticationService {
 //        //check if email exists
 //
 //    }
+
+    //Registered a disabled account
+    public void registerDisabled(RegisterRequest request){
+
+        //Password patches
+        if (!request.getPassword().equals(request.getConfirmPassword())){
+            throw new BadCredentialsException("Passwords do not match");
+        }
+
+        //Check if VALID user exist
+        User newUser = userRepository.findByEmail(request.getEmail());
+        if (newUser!=null && newUser.isEnabled()){
+            //valid, enabled user
+            log.debug("registration failed - email in use");
+            throw new BadRequestException("Email is already taken");
+        }
+
+        User toSave;
+        //If newUser is null create it
+        if (newUser==null) {
+            toSave = User.builder().build();
+        } else{
+            toSave = newUser;
+        }
+        toSave.setUsername(request.getUsername());
+        toSave.setEmail(request.getEmail());
+        toSave.setPassword(passwordEncoder.encode(request.getPassword()));
+        toSave.setEnabled(false);
+        toSave.setRole(UserRole.USER);
+        userRepository.save(toSave);
+
+
+        //Should automatically generate OTP
+        requestOTP(toSave.getEmail());
+
+    }
+
+
+    public void requestOTP(String email){
+        //1. check is the user exist and is not enabled
+        User user = userRepository.findByEmail(email);
+        if (user==null){
+            throw new BadRequestException("User does not exist");
+        }
+        if (user.isEnabled()){
+            throw new BadRequestException("User is already verified");
+        }
+
+        //2. check if user has exceeded the OTP rate limit
+        if (user.getRegistrationOTPRateLimit().isRateLimited()){
+            throw new BadCredentialsException("You have exceed the number of OTP generation attempted. Try again in 5 minutes");
+        }
+
+        //3. Generate an OTP
+        RegistrationOTP otp = RegistrationOTP.builder()
+                .otpCode(generateRandomOtp())
+                .expireTime(LocalDateTime.now().plusMinutes(10))
+                .build();
+
+        user.setRegistrationOTP(otp);
+
+        //TODO 4. Send the OTP to the user email
+    }
+
+    //TODO - also need to rate limit the verification attempts
+    @Transactional
+    public AuthenticationResponse verifyAccount(String email, int inputOTP){
+        //1. get the user base on the request
+        User user = userRepository.findByEmail(email);
+        if (user==null) throw new BadRequestException("user does not exist");
+        if (user.isEnabled()) throw new BadRequestException("User is already verified");
+
+        RegistrationOTP otp = user.getRegistrationOTP();
+        if (otp==null) throw new BadRequestException("Verified failed. Try again");
+        if (otp.getExpireTime().isAfter(LocalDateTime.now())){
+            throw new BadCredentialsException("OTP has expired please try again");
+        }
+
+
+        if (otp.getOtpCode()!=inputOTP) throw new BadRequestException("OTP does not match. Please try again");
+
+        //3. if everything passed generated a token
+        user.setEnabled(true);
+        String token = jwtService.generateToken(user);
+        return AuthenticationResponse.builder()
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .token(token)
+                .build();
+
+
+    }
+
+    public Integer generateRandomOtp(){
+        int min = 110_011;
+        int max = 989_999;
+        return (int) (Math.random()*(max-min)+min);
+    }
+
+
 
     public AuthenticationResponse register( RegisterRequest request){
         //Ensure password matches
@@ -63,6 +166,11 @@ public class AuthenticationService {
                 .build();
 
     }
+
+
+
+
+
 
     public AuthenticationResponse login( LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail());

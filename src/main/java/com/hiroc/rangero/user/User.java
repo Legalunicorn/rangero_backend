@@ -26,7 +26,7 @@ import java.util.Set;
 @Table(name="_user")
 public class User implements UserDetails {
 
-    //TODO define some basic properties
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id; //ID
@@ -35,10 +35,18 @@ public class User implements UserDetails {
     private String email; //unique
     private String displayName; //can be what
     private String password;
+    private boolean enabled;
+
+    @Embedded
+    private RegistrationOTPRateLimit registrationOTPRateLimit;
+
+    @Embedded
+    private RegistrationOTP registrationOTP;
 
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    //Consider
     @OneToMany(mappedBy="assignee")
     private Set<Task> tasks = new HashSet<>();
 
@@ -55,6 +63,8 @@ public class User implements UserDetails {
     private Set<Notification> sentNotifications = new HashSet<>();
     @OneToMany(mappedBy="receiver")
     private Set<Notification> receivedNotifications = new HashSet<>();
+
+    //TODO - consider adding user.comments
 
     //TODO add helper method in task or in user for adding task and maintaining bidirectional relationship
 
@@ -88,6 +98,8 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return enabled;
     }
+
+
 }

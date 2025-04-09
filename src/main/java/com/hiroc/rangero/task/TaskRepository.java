@@ -18,6 +18,6 @@ public interface TaskRepository  extends JpaRepository<Task,Long> {
     Set<Task> findAllWithIdsIn(@Param("taskIds") Set<Long> taskIds);
 
 
-    @Query("SELECT t FROM Task t LEFT JOIN FETCH t.dependencies WHERE task.project.id=:projectId")
+    @Query("SELECT t FROM Task t LEFT JOIN FETCH t.dependencies WHERE t.project.id=:projectId")
     Set<Task> findTaskByProjectIdWithDependencies(@Param("projectId") Long projectId);
 }

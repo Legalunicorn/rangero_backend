@@ -4,6 +4,7 @@ package com.hiroc.rangero.task;
 import com.hiroc.rangero.activityLog.Action;
 import com.hiroc.rangero.activityLog.ActivityLogEvent;
 import com.hiroc.rangero.activityLog.ActivityLogRequest;
+import com.hiroc.rangero.email.EmailService;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.exception.TaskNotFoundException;
 import com.hiroc.rangero.exception.UnauthorisedException;
@@ -43,6 +44,9 @@ public class TaskService {
     //Make sure project service does not call task service
     private final ProjectService projectService;
     private final TaskMapper taskMapper;
+
+    //Testing
+    private final EmailService emailService;
 
     public TaskDTO getTaskByIdAuthorizedToDto(User accessor, long taskId){
         Task task = getTaskByIdAuthorized(accessor,taskId);
@@ -104,6 +108,10 @@ public class TaskService {
         //TODO, should this be sync or async, can newTask be used or not
         createActivityLog(newTask,user,project,Action.CREATE_TASK);
         log.debug("Task created");
+
+
+        //Send a test email
+        emailService.sendEmail(user.getEmail(),"Test email",newTask.getTitle());
         return newTask;
 
     }
@@ -172,13 +180,22 @@ public class TaskService {
         //2. use task entity to get the project, and then fetch the projectMember
         ProjectMember member = projectMemberService.findByUserAndProject(user,task.getProject())
                 .orElseThrow(()-> new UnauthorisedException("You do not have permission to do this action"));
+
+        //verify that the dependencies of the task are cleared if were to set to completed
+        if (newStatus==TaskStatus.COMPLETED){
+            for (Task dependency: task.getDependencies()){
+                if (dependency.getStatus()!=TaskStatus.COMPLETED){
+                    throw new BadRequestException("Task: "+dependency.getTitle()+" is a dependency and must be completed before this task is completed");
+                }
+            }
+        }
+
         //3. modify the task and commit
-        createActivityLog(task,user,task.getProject(),Action.UPDATE_TASK_STATUS,task.getStatus(),newStatus);
+        createActivityLog(task,user,task.getProject(),task.getStatus(),newStatus);
         task.setStatus(newStatus);
         taskRepository.save(task);
         return task;
     }
-
 
     @Transactional
     public void addTaskDependencies(User user, Task task, Set<Long> taskDependencyIds){
@@ -211,45 +228,7 @@ public class TaskService {
             task.addDependency(newDependency);
         }
     }
-
-//
-//    @Transactional
-//    public void setTaskDependencies(User user, Long projectId, Long taskId, Set<Long> taskDependencyIds){
-//        // 0 - validate everything: User permission, all tasks existingProject project = projectService.findById(projectId).orElseThrow(()->new BadRequestException("Project not found"));
-//        Task task = taskRepository.findById(taskId)
-//                .orElseThrow(()-> new TaskNotFoundException(taskId));
-//        ProjectMember member = projectMemberService.findByUserEmailAndProjectId(user.getEmail(),projectId)
-//                .orElseThrow(()->new BadRequestException("Project member not found"));
-//        checkProjectPermissions(task.getProject(),member,ProjectRole.ADMIN);
-//
-//        // We extract those that can be found. If not found ? No error thrown + nothing changes. Nothing will break
-//        Set<Task> taskDependencies = taskRepository.findAllWithIdsIn(taskDependencyIds); //we add these task one by one
-//        //Make sure these tasks belong to the project
-//        for (Task t: taskDependencies) if (t.getProject().getId()!=task.getProject().getId()){
-//            throw new UnauthorisedException("Unable to modify task from another project. Task ID:"+t.getId());
-//        }
-//
-//
-//        //1 - Cycle detection itself once data is validated
-//        Set<Task> allProjectTask = taskRepository.findTaskByProjectIdWithDependencies(projectId);
-//        Map<Long,Set<Task>> adjacencyList = new HashMap<>(); //TaskID -> to its dependencies
-//        for(Task t: allProjectTask){
-//            adjacencyList.put(t.getId(),t.getDependencies());
-//        }
-//
-//        for (Task newDependency: taskDependencies){
-//            adjacencyList.get(taskId).add(newDependency);
-//            CycleDetection.detectCycle(adjacencyList,taskId);
-//            task.addDependency(newDependency);
-//        }
-//        //@Transactional -> should save the new changes
-//    }
-
-
     // HELPER METHODS #################################################################
-
-
-
 
     //No Task
     //TODO remove after changing to activity log
@@ -265,9 +244,9 @@ public class TaskService {
                 .user(user).project(project).task(task).action(action).build();
         eventPublisher.publishEvent(new ActivityLogEvent(this,request));
     }
-    private void createActivityLog(Task task,User user, Project project, Action action,TaskStatus previousStatus, TaskStatus newStatus){
+    private void createActivityLog(Task task,User user, Project project,TaskStatus previousStatus, TaskStatus newStatus){
         ActivityLogRequest request = ActivityLogRequest.builder()
-                .user(user).project(project).task(task).previousTaskStatus(previousStatus).currentTaskStatus(newStatus).action(action).build();
+                .user(user).project(project).task(task).previousTaskStatus(previousStatus).currentTaskStatus(newStatus).action(Action.UPDATE_TASK_STATUS).build();
         eventPublisher.publishEvent(new ActivityLogEvent(this,request));
     }
 
@@ -289,7 +268,5 @@ public class TaskService {
             throw new UnauthorisedException("You do not have permission to perform this action.");
         }
     }
-
-
 
 }

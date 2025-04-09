@@ -39,7 +39,7 @@ public class CommentController {
         if (file==null && request.getBody().isEmpty()){
             throw new BadRequestException("Empty comments are not allowed");
         }
-        return commentService.createComment2(creator,request,file);
+        return commentService.createComment(creator,request,file);
     }
 
 

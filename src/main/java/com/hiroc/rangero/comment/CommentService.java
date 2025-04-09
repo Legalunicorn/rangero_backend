@@ -48,31 +48,30 @@ public class CommentService {
     }
 
     //Permissions: any member
-    public CommentDTO createComment(User creator, CommentRequestDTO request) {
-        //Get the task, ensuring accessor is part of the project
-        Task task = taskService.getTaskByIdAuthorized(creator,request.getTaskId());
-        //Create comment
-        Comment newComment = Comment.builder()
-                .task(task)
-                .body(request.getBody())
-                .build();
-        commentRepository.save(newComment);
-        return commentMapper.toDTO(newComment);
-
-    }
+//    public CommentDTO createComment(User creator, CommentRequestDTO request) {
+//        //Get the task, ensuring accessor is part of the project
+//        Task task = taskService.getTaskByIdAuthorized(creator,request.getTaskId());
+//        //Create comment
+//        Comment newComment = Comment.builder()
+//                .task(task)
+//                .body(request.getBody())
+//                .build();
+//        commentRepository.save(newComment);
+//        return commentMapper.toDTO(newComment);
+//
+//    }
 
     //UPDATE -> allow mentioning of users
     @Transactional
-    public CommentDTO createComment2(User creator, @Valid CommentRequestDTO request, MultipartFile file) throws IOException {
+    public CommentDTO createComment(User creator, @Valid CommentRequestDTO request, MultipartFile file) throws IOException {
         //Get task and check permissions
         Task task = taskService.getTaskByIdAuthorized(creator,request.getTaskId());
 
 
-
-
         Comment newComment = Comment.builder()
                 .task(task)
                 .body(request.getBody())
+                .author(creator)
                 .build();
 
         //Check for mentions

@@ -2,6 +2,7 @@ package com.hiroc.rangero.comment;
 
 
 import com.hiroc.rangero.task.Task;
+import com.hiroc.rangero.user.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -32,6 +33,10 @@ public class Comment {
     @ManyToOne
     @JoinColumn(name="task_id")
     private Task task;
+
+    @ManyToOne
+    @JoinColumn(name="user_id")
+    private User author;
 
     @CollectionTable(
             name = "comment_mentions",
