@@ -9,6 +9,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class EmailService {
     private String applicationEmail;
 
 
-    @EventListener
+    @TransactionalEventListener
     @Async
     public void sendEmail(EmailEvent event){
         EmailRequest request = event.getRequest();

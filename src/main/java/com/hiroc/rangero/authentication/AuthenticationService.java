@@ -1,6 +1,9 @@
 package com.hiroc.rangero.authentication;
 
 
+import com.hiroc.rangero.email.EmailEvent;
+import com.hiroc.rangero.email.dto.EmailRequest;
+import com.hiroc.rangero.email.enums.EmailType;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.user.RegistrationOTP;
 import com.hiroc.rangero.user.User;
@@ -11,6 +14,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,7 +30,7 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
-
+    private final ApplicationEventPublisher eventPublisher;
     //TODO two step process check if email exist first
 //    public boolean checkEmail(@RequestBody String email){
 //        //check if email exists
@@ -69,7 +73,7 @@ public class AuthenticationService {
 
     }
 
-
+    @Transactional
     public void requestOTP(String email){
         //1. check is the user exist and is not enabled
         User user = userRepository.findByEmail(email);
@@ -86,15 +90,32 @@ public class AuthenticationService {
         }
 
         //3. Generate an OTP
+        int randomOtp = generateRandomOtp();
         RegistrationOTP otp = RegistrationOTP.builder()
-                .otpCode(generateRandomOtp())
+                .otpCode(randomOtp)
                 .expireTime(LocalDateTime.now().plusMinutes(10))
                 .build();
 
         user.setRegistrationOTP(otp);
 
         //TODO 4. Send the OTP to the user email
+        EmailRequest request  = EmailRequest.builder()
+                .recipient(user.getEmail())
+                .body("""
+                        Hello,
+                        %s is your one-time passcode (OTP) for your account registration. 
+                        You can copy paste the code or enter it manually in the website
+                        This code will be value for 10 minutes. 
+                        
+                        Enjoy the app! 
+                        Rangero Team
+                        """.formatted(randomOtp))
+                .emailType(EmailType.REGISTRATION)
+                .build();
+        eventPublisher.publishEvent(new EmailEvent(this,request));
     }
+
+
 
     //TODO - also need to rate limit the verification attempts
     @Transactional
@@ -125,7 +146,7 @@ public class AuthenticationService {
 
     }
 
-    public Integer generateRandomOtp(){
+    private Integer generateRandomOtp(){
         int min = 110_011;
         int max = 989_999;
         return (int) (Math.random()*(max-min)+min);

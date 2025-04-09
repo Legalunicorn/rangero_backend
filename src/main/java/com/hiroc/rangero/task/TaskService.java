@@ -48,8 +48,6 @@ public class TaskService {
     private final ProjectService projectService;
     private final TaskMapper taskMapper;
 
-    //Testing
-    private final EmailService emailService;
 
     public TaskDTO getTaskByIdAuthorizedToDto(User accessor, long taskId){
         Task task = getTaskByIdAuthorized(accessor,taskId);
