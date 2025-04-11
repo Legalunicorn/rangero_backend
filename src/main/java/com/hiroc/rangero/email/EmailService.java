@@ -35,7 +35,9 @@ public class EmailService {
         log.debug("sending mail to {}",request.getRecipient());
         log.debug(request.getBody());
         log.debug(request.getSubject());
-        mailSender.send(message);
+
+        //TODO - (Switch off email service for now)
+//        mailSender.send(message);
     }
 
 

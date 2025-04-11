@@ -30,7 +30,7 @@ public class TaskController {
 
     @GetMapping("/{taskId}/comments")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Set<CommentDTO> getTaskCommnets(@PathVariable long taskId){
+    public Set<CommentDTO> getTaskComments(@PathVariable long taskId){
         if (taskId<=0){
             throw new BadRequestException("Task Id must be positive");
         }
@@ -55,22 +55,23 @@ public class TaskController {
         return taskMapper.toDto(taskCreated);
     }
 
-    @PatchMapping("/{taskId}/status")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public TaskDTO patchTaskStatus(@PathVariable Long taskId, @RequestBody TaskRequestDTO request ){
-        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (request.getStatus()==null){
-            throw new BadRequestException("Invalid updated status value");
-        }
-        if (taskId==null || taskId<=0) throw new BadRequestException("Invalid taskId");
-        return taskService.patchTaskStatusDto(user,taskId,request.getStatus());
-    }
+//    //TOD remove if useless
+//    @PatchMapping("/{taskId}/status")
+//    @ResponseStatus(HttpStatus.ACCEPTED)
+//    public TaskDTO patchTaskStatus(@PathVariable Long taskId, @RequestBody TaskRequestDTO request ){
+//        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//        if (request.getStatus()==null){
+//            throw new BadRequestException("Invalid updated status value");
+//        }
+//        if (taskId==null || taskId<=0) throw new BadRequestException("Invalid taskId");
+//        return taskService.patchTaskStatusDto(user,taskId,request.getStatus());
+//    }
 
     @PatchMapping("/{taskId}/details")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public TaskDTO patchTaskDetails(@PathVariable Long taskId, @Valid @RequestBody TaskRequestDTO request){
+    public TaskDTO patchTaskDetails(@PathVariable long taskId,@RequestBody TaskRequestDTO request){
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (taskId==null || taskId<=0) throw new BadRequestException("Invalid taskId");
+        if (taskId<=0) throw new BadRequestException("Invalid taskId");
         return taskService.patchTaskDetails(user,taskId,request);
     }
 }

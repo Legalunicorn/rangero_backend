@@ -36,4 +36,10 @@ public class InviteRecordController {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         inviteRecordService.acceptInvite(user, inviteId);
     }
+
+    @PatchMapping("/{inviteId}/decline")
+    public void declineInvite(@PathVariable long inviteId){
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        inviteRecordService.declineInvite(user,inviteId);
+    }
 }

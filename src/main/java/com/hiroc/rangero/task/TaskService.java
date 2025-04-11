@@ -118,6 +118,7 @@ public class TaskService {
     }
 
     @Transactional
+    //Update method: only update fields that are provided
     //Normal  fields : Title, Due Date, Priority
     //Tricky fields : Status, Assignee, Dependencies
     public TaskDTO patchTaskDetails(User user, Long taskId, TaskRequestDTO updatedDetails){
@@ -304,5 +305,4 @@ public class TaskService {
             throw new UnauthorisedException("You do not have permission to perform this action.");
         }
     }
-
 }

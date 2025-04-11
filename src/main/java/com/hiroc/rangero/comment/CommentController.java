@@ -30,7 +30,7 @@ public class CommentController {
     //TEST - create a file with file upload
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CommentDTO createComment2(@Valid @RequestPart(value="comment",required=true) CommentRequestDTO request,
+    public CommentDTO createComment(@Valid @RequestPart(value="comment",required=true) CommentRequestDTO request,
                                      @RequestPart(value="file",required=false) MultipartFile file) throws IOException {
         User creator  =(User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (file!=null && file.getSize()>8*1000*1000){
@@ -40,6 +40,13 @@ public class CommentController {
             throw new BadRequestException("Empty comments are not allowed");
         }
         return commentService.createComment(creator,request,file);
+    }
+
+    @DeleteMapping("/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@PathVariable long commentId){
+        User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        commentService.deleteComment(commentId,user);
     }
 
 

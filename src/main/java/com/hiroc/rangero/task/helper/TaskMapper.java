@@ -7,6 +7,10 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 
 //USAGE -> in controller
 
@@ -18,8 +22,14 @@ public interface TaskMapper {
     @Mapping(target="assigneeId", source="assignee.id")
     TaskDTO toDto(Task entity);
 
-//    @Mapping(target="assignee.id", source="assigneeId")
-//    Task toEntity(TaskDTO dto);
+    //Add custom method for mapping dependeices into Ids?
+
+    default Set<Long> map(Set<Task> dependencies){
+        if (dependencies!=null){
+            return dependencies.stream().map(Task::getId).collect(Collectors.toSet());
+        }
+        return new HashSet<Long>();
+    }
 
 
 }

@@ -3,11 +3,15 @@ package com.hiroc.rangero.comment;
 
 import com.hiroc.rangero.email.EmailEvent;
 import com.hiroc.rangero.email.dto.EmailRequest;
+import com.hiroc.rangero.exception.BadRequestException;
+import com.hiroc.rangero.exception.UnauthorisedException;
 import com.hiroc.rangero.notification.NotificationEvent;
 import com.hiroc.rangero.notification.dto.NotificationRequest;
 import com.hiroc.rangero.notification.NotificationType;
+import com.hiroc.rangero.project.Project;
 import com.hiroc.rangero.projectMember.ProjectMember;
 import com.hiroc.rangero.projectMember.ProjectMemberService;
+import com.hiroc.rangero.projectMember.ProjectRole;
 import com.hiroc.rangero.task.Task;
 import com.hiroc.rangero.task.TaskService;
 import com.hiroc.rangero.user.User;
@@ -49,22 +53,8 @@ public class CommentService {
 
     }
 
-    //Permissions: any member
-//    public CommentDTO createComment(User creator, CommentRequestDTO request) {
-//        //Get the task, ensuring accessor is part of the project
-//        Task task = taskService.getTaskByIdAuthorized(creator,request.getTaskId());
-//        //Create comment
-//        Comment newComment = Comment.builder()
-//                .task(task)
-//                .body(request.getBody())
-//                .build();
-//        commentRepository.save(newComment);
-//        return commentMapper.toDTO(newComment);
-//
-//    }
-
-    //UPDATE -> allow mentioning of users
     @Transactional
+    //TODO - allow multiple file uploads (up to 3)
     public CommentDTO createComment(User creator, @Valid CommentRequestDTO request, MultipartFile file) throws IOException {
         //Get task and check permissions
         Task task = taskService.getTaskByIdAuthorized(creator,request.getTaskId());
@@ -110,6 +100,43 @@ public class CommentService {
         return commentMapper.toDTO(newComment);
     }
 
+    //TODO - delete comment
+    // Permission level : Author or >=ADMIN
+    @Transactional
+    public void deleteComment(long commentId, User userPerformingAction){
+        //0. get the comment
+        // if user is author: authorized delete and exist
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(()->new BadRequestException("comment not found"));
+
+        if (comment.getAuthor().getId()==userPerformingAction.getId()){
+            commentRepository.delete(comment);
+            return;
+        }
+
+        //Admin and above
+        ProjectMember member = projectMemberService.findByUserEmailAndProjectId(userPerformingAction.getEmail(),comment.getTask().getProject().getId())
+                .orElseThrow(UnauthorisedException::new);
+
+        if (member.getProjectRole()== ProjectRole.MEMBER){
+            throw new UnauthorisedException();
+        } else{
+            commentRepository.delete(comment);
+
+        }
+    }
+
+
+    //TODO - edit comment
+
+
+    //TODO - get comment?
+
+
+    /*
+    ############################## HELPERS ##################################
+     */
+
 
     private void emailUsers(User sender, Set<User> notifiedUsers, Task task){
         for (User recipient: notifiedUsers){
@@ -125,8 +152,6 @@ public class CommentService {
 
             eventPublisher.publishEvent(new EmailEvent(this, emailRequest));
         }
-
-
     }
 
     private void notifyUsersInApp(User sender, Set<User> notifiedUsers, Task task){

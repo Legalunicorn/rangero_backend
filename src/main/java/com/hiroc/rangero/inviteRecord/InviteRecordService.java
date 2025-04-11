@@ -71,6 +71,19 @@ public class InviteRecordService {
 
     }
 
+    @Transactional
+    public void declineInvite(User user, long inviteId){
+        InviteRecord record = inviteRecordRepository.findById(inviteId)
+                .orElseThrow(()-> new BadRequestException("Invite request not found"));
+        if (record.getInvitee().getId()!=user.getId()) {
+            throw new UnauthorisedException();
+        }
+//        if (record.getInviteStatus()!=InviteStatus.PENDING){
+//            throw new BadRequestException("Invite has expired");
+//        }
+        record.setInviteStatus(InviteStatus.DECLINED);
+    }
+
 
     @Transactional
     public void acceptInvite(User user, long inviteId) {
