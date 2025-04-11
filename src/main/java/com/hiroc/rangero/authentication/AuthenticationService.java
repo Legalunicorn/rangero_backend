@@ -5,10 +5,7 @@ import com.hiroc.rangero.email.EmailEvent;
 import com.hiroc.rangero.email.dto.EmailRequest;
 import com.hiroc.rangero.email.enums.EmailType;
 import com.hiroc.rangero.exception.BadRequestException;
-import com.hiroc.rangero.user.RegistrationOTP;
-import com.hiroc.rangero.user.User;
-import com.hiroc.rangero.user.UserRepository;
-import com.hiroc.rangero.user.UserRole;
+import com.hiroc.rangero.user.*;
 import com.hiroc.rangero.utility.JwtService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -31,13 +28,9 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
-    //TODO two step process check if email exist first
-//    public boolean checkEmail(@RequestBody String email){
-//        //check if email exists
-//
-//    }
 
     //Registered a disabled account
+    @Transactional
     public void registerDisabled(RegisterRequest request){
 
         //Password patches
@@ -65,8 +58,8 @@ public class AuthenticationService {
         toSave.setPassword(passwordEncoder.encode(request.getPassword()));
         toSave.setEnabled(false);
         toSave.setRole(UserRole.USER);
+        if (toSave.getRegistrationOTPRateLimit()==null) toSave.setRegistrationOTPRateLimit(new RegistrationOTPRateLimit());
         userRepository.save(toSave);
-
 
         //Should automatically generate OTP
         requestOTP(toSave.getEmail());
@@ -88,30 +81,34 @@ public class AuthenticationService {
         if (user.getRegistrationOTPRateLimit().isRateLimited()){
             throw new BadCredentialsException("You have exceed the number of OTP generation attempted. Try again in 5 minutes");
         }
+        user.getRegistrationOTPRateLimit().addAttempt();
 
         //3. Generate an OTP
         int randomOtp = generateRandomOtp();
+        log.info(">>> OTP : {}",randomOtp);
+
         RegistrationOTP otp = RegistrationOTP.builder()
                 .otpCode(randomOtp)
                 .expireTime(LocalDateTime.now().plusMinutes(10))
                 .build();
 
         user.setRegistrationOTP(otp);
-
+        userRepository.save(user);
         //TODO 4. Send the OTP to the user email
         EmailRequest request  = EmailRequest.builder()
                 .recipient(user.getEmail())
                 .body("""
-                        Hello,
-                        %s is your one-time passcode (OTP) for your account registration. 
-                        You can copy paste the code or enter it manually in the website
-                        This code will be value for 10 minutes. 
+                        Dear %s,
+                        %s is your one-time passcode (OTP) for your account registration.
+                        You can copy paste the code or enter it manually in the website.
+                        This code will be valid for 10 minutes.
                         
-                        Enjoy the app! 
+                        Enjoy the app!
                         Rangero Team
-                        """.formatted(randomOtp))
-                .emailType(EmailType.REGISTRATION)
+                        """.formatted(user.getUsername(),randomOtp))
+                .subject("Your One-Time-Password (OTP) For Rangero Registration")
                 .build();
+
         eventPublisher.publishEvent(new EmailEvent(this,request));
     }
 
@@ -127,13 +124,12 @@ public class AuthenticationService {
 
         RegistrationOTP otp = user.getRegistrationOTP();
         if (otp==null) throw new BadRequestException("Verified failed. Try again");
-        if (otp.getExpireTime().isAfter(LocalDateTime.now())){
+        if (otp.getExpireTime().isBefore(LocalDateTime.now())){
             throw new BadCredentialsException("OTP has expired please try again");
         }
 
 
         if (otp.getOtpCode()!=inputOTP) throw new BadRequestException("OTP does not match. Please try again");
-
         //3. if everything passed generated a token
         user.setEnabled(true);
         String token = jwtService.generateToken(user);
@@ -151,47 +147,6 @@ public class AuthenticationService {
         int max = 989_999;
         return (int) (Math.random()*(max-min)+min);
     }
-
-
-
-    public AuthenticationResponse register( RegisterRequest request){
-        //Ensure password matches
-        if (!request.getPassword().equals(request.getConfirmPassword())){
-            throw new BadCredentialsException("Passwords do not match");
-        }
-        //Check the username and email is unique
-        User exists = userRepository.findByEmail(request.getEmail());
-
-        if (exists!=null){
-            //TODO throw a proper error
-            log.debug("Registration failed - user with email exists");
-            throw new BadRequestException("Email is already taken");
-        }
-
-        //Create user
-        User newUser = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(UserRole.USER)
-                .build();
-
-        userRepository.save(newUser);
-
-        //Generate the token
-        String token = jwtService.generateToken(newUser);
-        return AuthenticationResponse.builder()
-                .token(token)
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .build();
-
-    }
-
-
-
-
-
 
     public AuthenticationResponse login( LoginRequest request){
         User user = userRepository.findByEmail(request.getEmail());

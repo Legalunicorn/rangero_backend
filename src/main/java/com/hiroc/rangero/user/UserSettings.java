@@ -1,18 +1,15 @@
 package com.hiroc.rangero.user;
 
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Embeddable
 @Builder
 @AllArgsConstructor
-@Getter
-@Setter
+@NoArgsConstructor
+@Data
 public class UserSettings {
 
-    private boolean AssignmentEmailEnabled;
-    private boolean NotificationEmailEnabled;
+    private boolean AssignmentEmailEnabled= true;
+    private boolean NotificationEmailEnabled= true;
 }

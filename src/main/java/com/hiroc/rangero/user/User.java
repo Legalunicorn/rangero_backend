@@ -68,7 +68,7 @@ public class User implements UserDetails {
     //TODO add user profile pictures
 
     @Embedded
-    private UserSettings settings;
+    private UserSettings settings = new UserSettings();
 
 
 

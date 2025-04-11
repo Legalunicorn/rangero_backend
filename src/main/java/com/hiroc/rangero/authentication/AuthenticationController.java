@@ -22,13 +22,6 @@ public class AuthenticationController {
     }
 
 
-    //TODO replace this with ->
-//    @PostMapping("/register")
-//    @ResponseStatus(HttpStatus.CREATED)
-//    public AuthenticationResponse register(@Valid @RequestBody RegisterRequest request){
-//        return authenticationService.register(request);
-//    }
-
     //register + verify should be enough for most cases
     // if the user fails otp and wants a new one
     // register -> verify (fail) -> request otp -> verify
@@ -45,13 +38,14 @@ public class AuthenticationController {
         authenticationService.requestOTP(email);
     }
 
-    @PostMapping("/verification/{email}")
+
+    @PostMapping("/verification")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public AuthenticationResponse verifyAccount(
-            @PathVariable String email,
-            @RequestBody Integer opt
+           @Valid @RequestBody VerificationRequest request
     ){
-        return authenticationService.verifyAccount(email,opt);
+        log.debug("LALA {} {}",request.getOtp(),request.getEmail());
+        return authenticationService.verifyAccount(request.getEmail(),request.getOtp());
     }
 
 
