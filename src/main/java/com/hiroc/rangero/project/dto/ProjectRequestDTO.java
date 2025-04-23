@@ -1,4 +1,4 @@
-package com.hiroc.rangero.project;
+package com.hiroc.rangero.project.dto;
 
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;

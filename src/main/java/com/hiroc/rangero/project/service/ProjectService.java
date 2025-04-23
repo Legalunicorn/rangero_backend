@@ -1,6 +1,9 @@
-package com.hiroc.rangero.project;
+package com.hiroc.rangero.project.service;
 
 
+import com.hiroc.rangero.project.Project;
+import com.hiroc.rangero.project.ProjectRepository;
+import com.hiroc.rangero.project.dto.ProjectRequestDTO;
 import com.hiroc.rangero.projectMember.ProjectMember;
 import com.hiroc.rangero.projectMember.ProjectMemberService;
 import com.hiroc.rangero.projectMember.ProjectRole;
@@ -25,8 +28,18 @@ public class ProjectService {
         return projectRepository.findById(projectId);
     }
 
-
-
+//
+//    public ProjectStatsDTO getProjectStats(long projectId, User accessor){
+//        //only members can access the user stats
+//        ProjectMember member = projectMemberService.findByUserEmailAndProjectId(accessor.getEmail(), projectId)
+//                .orElseThrow(UnauthorisedException::new);
+//
+//        Set<TaskStatusCountDTO> taskCount = taskSer
+//        //1. get the count of task
+//        // either use a SQL query for each, or loop over all the tasks
+//        // I think: 1 sql query, then loop through all with counters
+//        return ProjectStatsDTO.builder().build();
+//    }
 
     //Controller handle DTOS now
     @Transactional

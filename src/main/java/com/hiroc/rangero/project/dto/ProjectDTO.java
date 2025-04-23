@@ -1,4 +1,4 @@
-package com.hiroc.rangero.project;
+package com.hiroc.rangero.project.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -5,17 +5,16 @@ import com.hiroc.rangero.activityLog.Action;
 import com.hiroc.rangero.activityLog.ActivityLogEvent;
 import com.hiroc.rangero.activityLog.ActivityLogRequest;
 import com.hiroc.rangero.email.EmailEvent;
-import com.hiroc.rangero.email.EmailService;
 import com.hiroc.rangero.email.dto.EmailRequest;
-import com.hiroc.rangero.email.enums.EmailType;
 import com.hiroc.rangero.exception.BadRequestException;
 import com.hiroc.rangero.exception.TaskNotFoundException;
 import com.hiroc.rangero.exception.UnauthorisedException;
 import com.hiroc.rangero.notification.NotificationEvent;
-import com.hiroc.rangero.notification.NotificationRepository;
 import com.hiroc.rangero.notification.dto.NotificationRequest;
 import com.hiroc.rangero.project.Project;
-import com.hiroc.rangero.project.ProjectService;
+import com.hiroc.rangero.project.dto.UserTaskCountDTO;
+import com.hiroc.rangero.project.service.ProjectService;
+import com.hiroc.rangero.project.dto.TaskStatusCountDTO;
 import com.hiroc.rangero.projectMember.ProjectMember;
 import com.hiroc.rangero.projectMember.ProjectMemberService;
 import com.hiroc.rangero.projectMember.ProjectRole;
@@ -50,6 +49,23 @@ public class TaskService {
     //Make sure project service does not call task service
     private final ProjectService projectService;
     private final TaskMapper taskMapper;
+
+    public Set<UserTaskCountDTO> getUserTaskCount(User accessor, Long projectId){
+        ProjectMember member = projectMemberService.findByUserEmailAndProjectId(accessor.getEmail(),projectId)
+                .orElseThrow(UnauthorisedException::new);
+
+        return taskRepository.findUsersByAssignedCount(projectId);
+    }
+
+    public Set<TaskStatusCountDTO> getTaskStatusCount(User accessor, Long projectId){
+        //Anyone that is a member can access it
+        //I believe this should be request in the project service as well, but if I recall correctly, spring data jpa will save the result in the persistence context?
+        ProjectMember  member = projectMemberService.findByUserEmailAndProjectId(accessor.getEmail(),projectId)
+                .orElseThrow(UnauthorisedException::new);
+
+        //Now we fetch from the repository
+        return  taskRepository.countTasksByStatusForProject(projectId);
+    }
 
 
     public TaskDTO getTaskByIdAuthorizedToDto(User accessor, long taskId){

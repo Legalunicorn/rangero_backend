@@ -2,7 +2,7 @@ package com.hiroc.rangero.task.enums;
 
 public enum TaskStatus {
     UNASSIGNED,
-    IN_PROGRESS,
-    PAUSED,
+    TODO,
+    REVIEWING,
     COMPLETED
 }

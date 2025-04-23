@@ -24,9 +24,9 @@ VALUES ('2025-03-18',1,3,1,'LOW','UNASSIGNED','task 3','2025-03-20 15:27:27.9207
 INSERT INTO task(due_date,assignee_id,id,project_id,priority,status,title,created_on,updated_on)
 VALUES ('2025-03-18',1,4,1,'LOW','UNASSIGNED','task 4','2025-03-20 15:27:27.920793','2025-03-20 15:27:27.920793');
 INSERT INTO task(due_date,assignee_id,id,project_id,priority,status,title,created_on,updated_on)
-VALUES ('2025-03-18',1,5,1,'LOW','UNASSIGNED','task 5','2025-03-20 15:27:27.920793','2025-03-20 15:27:27.920793');
+VALUES ('2025-03-18',1,5,1,'LOW','TODO','task 5','2025-03-20 15:27:27.920793','2025-03-20 15:27:27.920793');
 INSERT INTO task(due_date,assignee_id,id,project_id,priority,status,title,created_on,updated_on)
-VALUES ('2025-03-18',1,6,1,'LOW','UNASSIGNED','task 6','2025-03-20 15:27:27.920793','2025-03-20 15:27:27.920793');
+VALUES ('2025-03-18',1,6,1,'LOW','COMPLETED','task 6','2025-03-20 15:27:27.920793','2025-03-20 15:27:27.920793');
 
 
 --Change the SEQUAL T

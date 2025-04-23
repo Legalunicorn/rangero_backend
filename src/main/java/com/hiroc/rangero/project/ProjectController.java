@@ -3,6 +3,11 @@ package com.hiroc.rangero.project;
 
 import com.hiroc.rangero.activityLog.ActivityLogService;
 import com.hiroc.rangero.activityLog.dto.ActivityLogDTO;
+import com.hiroc.rangero.project.dto.ProjectDTO;
+import com.hiroc.rangero.project.dto.ProjectRequestDTO;
+import com.hiroc.rangero.project.dto.ProjectStatsDTO;
+import com.hiroc.rangero.project.service.ProjectService;
+import com.hiroc.rangero.project.service.ProjectStatisticService;
 import com.hiroc.rangero.projectMember.ProjectMemberDTO;
 import com.hiroc.rangero.projectMember.ProjectMemberService;
 import com.hiroc.rangero.task.dto.TaskDTO;
@@ -28,6 +33,13 @@ public class ProjectController {
     private final TaskService taskService;
     private final ProjectMapper projectMapper;
     private final ActivityLogService activityLogService;
+    private final ProjectStatisticService projectStatisticService;
+
+    @GetMapping("/{projectId}/stats")
+    public ProjectStatsDTO getProjectStats(@PathVariable long projectId){
+        User accessor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return projectStatisticService.getProjectStats(accessor,projectId);
+    }
 
     @GetMapping("/{projectId}/activities")
     public Set<ActivityLogDTO> getProjectActivities(@PathVariable long projectId){
